@@ -123,7 +123,7 @@ GET 用于获取资源，而 POST 用于传输实体主体
 
 >服务器返回的 响应报文 中第一行为状态行，包含了状态码以及原因短语，用来告知客户端请求的结果
 
-![HTTP状态码](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\http状态码.png)
+![HTTP状态码](..\笔记图片\http状态码.png)
 
 - 1XX 表示信息
 	* 100 Continue ：表明到目前为止都很正常，客户端可以继续发送请求或者忽略这个响应
@@ -152,5 +152,5 @@ GET 用于获取资源，而 POST 用于传输实体主体
 		+ 从 HTTP/1.1 开始默认是长连接的，如果要断开连接，需要由客户端或者服务器端提出断开，使用 Connection : close;
 		+ 在 HTTP/1.1 之前默认是短连接的，如果需要使用长连接，则使用 Connection : Keep-Alive;
 	* 默认情况下，HTTP 请求是按顺序发出的，下一个请求只有在当前请求收到响应之后才会被发出。由于受到网络延迟和带宽的限制，在下一个请求被发送到服务器之前，可能需要等待很长时间。流水线是在同一条长连接上连续发出请求，而不用等待响应返回，这样可以减少延迟
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\HTTPConnections.png" alt="HTTPConnections" style="zoom: 67%;" />
+<img src="..\笔记图片\HTTPConnections.png" alt="HTTPConnections" style="zoom: 67%;" />
 

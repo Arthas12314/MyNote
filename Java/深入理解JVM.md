@@ -1,6 +1,6 @@
 ## 自动内存管理机制
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\JVM体系结构图.png" alt="JVM体系结构图" style="zoom: 100%;" />
+<img src="..\笔记图片\JVM体系结构图.png" alt="JVM体系结构图" style="zoom: 100%;" />
 
 线程私有的：
 
@@ -437,7 +437,7 @@
 
     虚拟机对象头MarkWord
 
-    ![虚拟机对象头MarkWord](C:\Users\hawk4\Desktop\临时\笔记\虚拟机对象头MarkWord.png)
+    ![虚拟机对象头MarkWord](..\笔记图片\虚拟机对象头MarkWord.png)
 
   * 偏向锁
 

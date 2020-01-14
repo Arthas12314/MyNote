@@ -25,7 +25,7 @@
 ## JMM
 - JMM规范：它规定了一个线程如何和何时能够看到由其他线程修改过后的共享变量值以及在必须时如何同步地访问共享变量
 
-![java内存模型](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\java内存模型.jpg)
+![java内存模型](..\笔记图片\java内存模型.jpg)
 
 - 同步八种操作
 	* lock 作用于主内存的变量，把一个变量标识为一条线程独占状态
@@ -46,7 +46,7 @@
 	* 如果一个变量事先没有被lock操作锁定，那就不允许对他执行unlock操作，也不允许去unlock一个被其他线程锁定住的变量
 	* 对一个变量执行unlock操作之前，必须先把此变量同步回主内存中（执行store、write操作）
 
-![同步操作于规则](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\同步操作于规则.jpg)
+![同步操作于规则](..\笔记图片\同步操作于规则.jpg)
 
 ## 并发编程与线程安全
 ### 线程安全性
@@ -422,7 +422,7 @@ if(condition(a)){
 
 * 实现方式 CountDownLatch是通过一个计数器来实现的，计数器的初始化值为线程的数量。每当一个线程完成了自己的任务后，计数器的值就相应得减1。当计数器到达0时，表示所有的线程都已完成任务，然后在闭锁上等待的线程就可以恢复执行任务
 
-![CountDownLatch](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\countDownLatch.png)
+![CountDownLatch](..\笔记图片\countDownLatch.png)
 
 * CountDownLatch的构造函数源码
 
@@ -470,7 +470,7 @@ public CountDownLatch(int count) {
   semaphore.tryAcquire()
   ```
 
-  <img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\tryAcquire方法.png" alt="tryAcquire方法" style="zoom:80%;" />
+  <img src="..\笔记图片\tryAcquire方法.png" alt="tryAcquire方法" style="zoom:80%;" />
 
 * 其他常用方法
 
@@ -490,7 +490,7 @@ public CountDownLatch(int count) {
 
   CyclicBarrier默认的构造方法是CyclicBarrier(int parties)，其参数表示屏障拦截的线程数量，每个线程调用await方法告诉CyclicBarrier我已经到达了屏障，然后当前线程被阻塞
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\CyclicBarrier.png" alt="CyclicBarrier" style="zoom:50%;" />
+<img src="..\笔记图片\CyclicBarrier.png" alt="CyclicBarrier" style="zoom:50%;" />
 
 * CyclicBarrier的应用场景
 
@@ -504,7 +504,7 @@ public CountDownLatch(int count) {
 
 * CyclicBarrier方法列表
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\CyclicBarrier方法列表.png" alt="CyclicBarrier方法列表" style="zoom:80%;" />
+<img src="..\笔记图片\CyclicBarrier方法列表.png" alt="CyclicBarrier方法列表" style="zoom:80%;" />
 
 * 基本使用
 
@@ -808,7 +808,7 @@ public interface Future<V> {
 
 * FutureTask继承图
 
-![FutureTask继承图](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\FutureTask继承图.png)
+![FutureTask继承图](..\笔记图片\FutureTask继承图.png)
 
 可以看到，FutureTask实现了RunnableFuture接口，则RunnableFuture接口继承了Runnable接口和Future接口，所以FutureTask既能当做一个Runnable直接被Thread执行，也能作为Future用来得到Callable的计算结果
 
@@ -840,7 +840,7 @@ Fork/Join框架是Java7提供了的一个用于并行执行任务的框架， �
 
 - Fork/Join的运行流程图
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\ForkJoin的运行流程图.png" alt="ForkJoin的运行流程图" style="zoom: 67%;" />
+<img src="..\笔记图片\ForkJoin的运行流程图.png" alt="ForkJoin的运行流程图" style="zoom: 67%;" />
 
 * 工作窃取算法
 
@@ -854,7 +854,7 @@ Fork/Join框架是Java7提供了的一个用于并行执行任务的框架， �
 
   * 运行流程图
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\工作窃取运行流程图.png" alt="工作窃取运行流程图" style="zoom: 67%;" />
+<img src="..\笔记图片\工作窃取运行流程图.png" alt="工作窃取运行流程图" style="zoom: 67%;" />
 
 * Fork/Join框架执行的任务有以下局限性
   * 任务只能使用`fork()`和`join()`操作，作为同步机制。如果使用其他同步机制，工作线程不能执行其他任务，当它们在同步操作时。比如，在Fork/Join框架中，你使任务进入睡眠，那么在这睡眠期间内，正在执行这个任务的工作线程将不会执行其他任务。
@@ -979,15 +979,15 @@ public class ForkJoinTaskExample extends RecursiveTask<Integer> {
 
 #### threadPool类图
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\threadPool类图.png" alt="threadPool类图" style="zoom: 80%;" />
+<img src="..\笔记图片\threadPool类图.png" alt="threadPool类图" style="zoom: 80%;" />
 
 在类图中，我们最常使用的是ThreadPoolExecutor和Executors，这两个类都可以创建线程池，其中ThreadPoolExecutor是可定制化的去创建线程池，而Executors则属于是工具类，该类中已经封装好了一些创建线程池的方法，直接调用相应的方法即可创建线程
 
-![阿里关于Executor的规范](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\阿里关于Executor的规范.png)
+![阿里关于Executor的规范](..\笔记图片\阿里关于Executor的规范.png)
 
 线程池体系里最为核心的类是ThreadPoolExecutor，也是功能最强的，ThreadPoolExecutor共有四个构造函数
 
-![ThreadPoolExecutor构造函数](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\ThreadPoolExecutor构造函数.png)
+![ThreadPoolExecutor构造函数](..\笔记图片\ThreadPoolExecutor构造函数.png)
 
 #### 线程池参数
 
@@ -1005,7 +1005,7 @@ corePoolSize、maximumPoolSize、workQueue 这三个参数的关系
 
 拒绝策略的实现类都在ThreadPoolExecutor中
 
-![ThreadPoolExecutor拒绝策略类](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\ThreadPoolExecutor拒绝策略类.png)
+![ThreadPoolExecutor拒绝策略类](..\笔记图片\ThreadPoolExecutor拒绝策略类.png)
 
 workQueue是保存待执行任务的一个阻塞队列，当我们提交一个新的任务到线程池后，线程池会根据当前池中正在运行的线程数量来决定该任务的处理方式，有三种处理方式
 
@@ -1019,7 +1019,7 @@ workQueue是保存待执行任务的一个阻塞队列，当我们提交一个�
 
 线程池有五种状态
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\笔记图片\线程池状态.png" alt="线程池状态"  />
+<img src="..\笔记图片\线程池状态.png" alt="线程池状态"  />
 
 * running：运行状态，能接受新提交的任务，也能处理阻塞队列中的任务
 * shutdown：关闭状态，不能处理新的任务，但却可以继续处理阻塞队列中已保存的任务。在线程池处于 RUNNING 状态时，调用 shutdown()方法会使线程池进入到该状态。（finalize() 方法在执行过程中也会调用shutdown()方法进入该状态）；
