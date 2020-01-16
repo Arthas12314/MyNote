@@ -265,16 +265,16 @@
     - 使用alter命令
 
       ```mysql
-      # 该语句添加一个主键，这一意味着索引值必须是唯一的，且不能为NULL
+      #该语句添加一个主键，这一意味着索引值必须是唯一的，且不能为NULL
       alter table tbl_name add primary key(column_list)
       
-      # 这条语句创建索引的值必须是唯一的（除NULL外，NULL可能会出现多次
+      #这条语句创建索引的值必须是唯一的（除NULL外，NULL可能会出现多次
       alter table tbl_name add unique index_name(column_list)
       
-      # 添加普通索引，索引值可出现多次
+      #添加普通索引，索引值可出现多次
       alter table tbl_name add index index_name(column_list)
       
-      # 该语句指定了索引为FULLTEXT，用于全文索引
+      #该语句指定了索引为FULLTEXT，用于全文索引
       alter table tbl_name add fulltext_index index_name(column_list)
       ```
 
@@ -446,8 +446,903 @@
 
     * Case：
     
-      ![MySQL索引Case](../笔记图片/MySQL索引Case.png)
+      <img src="..\笔记图片\MySQL索引Case.png" alt="MySQL索引Case" style="zoom: 100%;" />
     
-      ![MySQL索引Case](..\笔记图片\MySQL索引Case解释.png)
+      <img src="..\笔记图片\MySQL索引Case解释.png" alt="MySQL索引Case解释" style="zoom: 100%;" />
     
+
+### 索引优化
+
+* 索引分析
+  
+  * 单表
+  
+    * 建表SQL
+  
+      ```mysql
+      create table if not exists `article`(
+      `id` int(10) unsigned not null primary key auto_increment,
+      `author_id` int(10) unsigned not null,
+      `category_id` int(10) unsigned not null,
+      `views` int(10) unsigned not null,
+      `comments` int(10) unsigned not null,
+      `title` varbinary(255) not null,
+      `content` text not null
+      );
       
+      insert into `article`(`author_id`,`category_id`,`views`,`comments`,`title`,`content`)
+      values(1,1,1,1,'1','1'),(2,2,2,2,'2','2'),(1,1,3,3,'3','3');
+      ```
+  
+    * 案例
+  
+      ```mysql
+      #查询查询 category_id 为 1 且 comments 大于 1 的情况下,views 最多的 article_id
+      select id,author_id
+      from article
+      where category_id=1 AND comments>1
+      order by views desc
+      limit 1;
+      ```
+  
+      <img src="..\笔记图片\单表查询explain结果1.png" alt="单表查询explain结果1" style="zoom: 100%;" />
+  
+      很显然,type 是 ALL,即最坏的情况。Extra 里还出现了 Using filesort,也是最坏的情况。优化是必须的
+  
+      ```mysql
+      create index idx_article_ccv 
+      on article(category_id,comments,views);
+      ```
+  
+      <img src="..\笔记图片\单表查询explain结果2.png" alt="单表查询explain结果2" style="zoom: 100%;" />
+  
+      type 变成了 range,这是可以忍受的。但是 extra 里使用 Using filesort 仍是无法接受的。但是我们已经建立了索引,为啥没用呢?这是因为按照 BTree 索引的工作原理,先排序 category_id,如果遇到相同的 category_id 则再排序 comments,如果遇到相同的 comments 则再排序 views。当 comments 字段在联合索引里处于中间位置时,因comments > 1 条件是一个范围值(所谓 range),MySQL 无法利用索引再对后面的 views 部分进行检索,即 range 类型查询字段后面的索引无效
+  
+      ```mysql
+       drop index idx_article_ccv on article;
+       
+      create index idx_article_cv 
+      on article(category_id,views);
+      ```
+  
+      <img src="..\笔记图片\单表查询explain结果3.png" alt="单表查询explain结果3" style="zoom: 100%;" />
+  
+      可以看到,type 变为了 ref,Extra 中的 Using filesort 也消失了,结果非常理想
+  
+  * 两表
+  
+    * 建表SQL
+  
+      ```mysql
+      CREATE TABLE IF NOT EXISTS `class` (
+      `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+      `card` int(10) unsigned NOT NULL,
+      PRIMARY KEY (`id`)
+      );
+      CREATE TABLE IF NOT EXISTS `book` (
+      `bookid` int(10) unsigned NOT NULL AUTO_INCREMENT,
+      `card` int(10) unsigned NOT NULL,
+      PRIMARY KEY (`bookid`)
+      );
+      
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `class`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      insert into `book`(card ) values (floor(1+(rand()*20)));
+      ```
+  
+      ```mysql
+      #explain分析
+      explain select * 
+      from class 
+      left join book
+      on class.card=book.card;
+      
+      #添加索引优化1
+      alter table `book` add index Y(`card`)
+      #添加索引优化2
+      alter table `class` add index Y(`card`)
+      ```
+  
+      <img src="..\笔记图片\两表查询explain结果1.png" alt="两表查询explain结果1" style="zoom: 100%;" />
+  
+      索引优化1
+  
+      <img src="..\笔记图片\两表查询explain结果2.png" alt="两表查询explain结果2" style="zoom: 100%;" />
+  
+      索引优化2
+  
+      <img src="..\笔记图片\两表查询explain结果3.png" alt="两表查询explain结果3" style="zoom: 100%;" />
+  
+    * 结论
+  
+      第一次优化的type变为了ref，rows优化也比较明显
+  
+      左连接特性，left join 条件用于确定如何从右表搜索行，左边一定都有，所以右表是我们的关键点，一定需要建立索引
+  
+      而右连接特性，right join 条件用于确定如何从左表搜索行，右边一定都有，所以左表是我们的关键点，一定需要建立索引
+  
+  * 三表
+  
+    * 建表
+  
+      ```mysql
+      create table if not exists `phone`(
+      	`phoneid` int(10) unsigned not null auto_increment,
+      	`card` int(10) unsigned not null,
+      	primary key (`phoneid`)
+      );
+       
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      insert into `phone`(card ) values (floor(1+(rand()*20)));
+      ```
+  
+      ```mysql
+      #explain分析
+      explain select * from class left join book on class.card=book.card left join phone on book.card = phone.card;
+      
+      #添加索引优化
+      alter table `phone` add index Z(`card`);
+      alter table `book` add index Y(`card`);
+      ```
+  
+      <img src="..\笔记图片\三表查询explain结果1.png" alt="三表查询explain结果1" style="zoom: 100%;" />
+  
+      索引优化
+  
+      <img src="..\笔记图片\三表查询explain结果2.png" alt="三表查询explain结果2" style="zoom: 100%;" />
+  
+      后 2 行的 type 都是 ref 且总 rows 优化很好,效果不错
+  
+  * 总结
+  
+    * 尽可能减少Join语句中的NestedLoop的循环总次数：“永远用小结果集驱动大的结果集”。优先优化NestedLoop的内层循环；
+    * 保证Join语句中被驱动表上Join条件字段已经被索引；
+    * 当无法保证被驱动表的Join字段被索引且内存资源充足的前提下，不要太吝惜JoinBuffer的设置；
+  
+* 索引失效
+
+  * 建表
+
+    ```mysql
+    CREATE TABLE `staffs`(
+    	id int primary key auto_increment,
+    	name varchar(24) not null default "" comment'姓名',
+    	age int not null default 0 comment '年龄',
+    	pos varchar(20) not null default ""  comment'职位',
+    	add_time timestamp not null default current_timestamp comment '入职时间'
+    	)charset utf8 comment '员工记录表';
+     
+    	
+    insert into staffs(name,age,pos,add_time) values('z3',22,'manage',now());
+    insert into staffs(name,age,pos,add_time) values('july',23,'dev',now());
+    insert into staffs(name,age,pos,add_time) values('2000',23,'dev',now());
+    select * from staffs;
+    
+    alter table staffs add index idx_staffs_nameAgePos(name,age,pos);
+    ```
+
+  * 索引失效案例
+
+    * 全值匹配
+
+      ```
+      explain select * from staffs where name='July';
+      explain select * from staffs where name='July' and age=23;
+      explain select * from staffs where name='July' and age=23 and pos='dev';
+      ```
+
+      <img src="..\笔记图片\索引失效-全值匹配1.png" alt="索引失效-全值匹配1" style="zoom: 100%;" />
+
+      <img src="..\笔记图片\索引失效-全值匹配2.png" alt="索引失效-全值匹配2" style="zoom: 100%;" />
+
+      <img src="..\笔记图片\索引失效-全值匹配3.png" alt="索引失效-全值匹配3" style="zoom: 100%;" />
+
+      ```mysql
+      explain select * from staffs where age=23 and pos='dev';
+      explain select * from staffs where pos='dev';
+      explain select * from staffs where name='July';
+      ```
+
+      <img src="..\笔记图片\索引失效-全值匹配4.png" alt="索引失效-全值匹配4" style="zoom: 100%;" />
+
+    * **最佳左前缀法则**：
+
+      - 如果索引了多列，要遵守最左前缀法则。指的是查询从索引的最左前列开始并且不跳过索引中的列。（==带头大哥不能死，中间兄弟不能断==哈哈哈）
+
+    * 不在索引列上作任何操作（计算、函数、（自动or手动）类型转换），会导致索引失效而转向全表扫描
+
+      ```mysql
+      explain select * from staffs where name='July';
+      explain select * from staffs where left(name,4)='July';
+      ```
+
+      <img src="..\笔记图片\索引失效-表达式匹配.png" alt="索引失效-表达式匹配" style="zoom: 100%;" />
+
+    * 存储引擎不能使用索引中范围条件右边的列
+
+      ```mysql
+      explain select * from staffs where name='z4';
+      explain select * from staffs where name='z4' and age=22;
+      explain select * from staffs where name='z4' and age=22 and pos='manager';
+      explain select * from staffs where name='z4' and age>11 and pos='manager';
+      ```
+
+      <img src="..\笔记图片\索引失效-范围条件右值匹配.png" alt="索引失效-范围条件右值匹配" style="zoom: 100%;" />
+
+    * 尽量使用覆盖索引（只访问索引的查询（索引列和查询列一致）），减少select *
+
+      ```mysql
+      explain select name,age,pos from staffs where name='July' and age=25 and pos='dev';
+      explain select * from staffs where name='July' and age=25 and pos='dev';
+      explain select name,age,pos from staffs where name='July' and age>25 and pos='dev';
+      explain select name,age,pos from staffs where name='July' and age=25;
+      explain select name from staffs where name='July' and age=25;
+      ```
+
+      <img src="..\笔记图片\尽量使用覆盖索引.png" alt="索引失效-范围条件右值匹配" style="zoom: 100%;" />
+
+    * mysql在使用不等于（！=或者<>）的时候无法使用索引会导致全表扫描
+
+      ```mysql
+      explain select * from staffs where name='July';
+      explain select * from staffs where name!='July';
+      explain select * from staffs where name<>'July';
+      ```
+
+      <img src="..\笔记图片\索引失效-使用不等于匹配.png" alt="索引失效-使用不等于匹配" style="zoom: 100%;" />
+
+    * is null，is not null也无法使用索引
+
+      ```mysql
+      explain select * from staffs where name is null;
+      explain select * from staffs where name is not null;
+      ```
+
+    * like以通配符开头(‘%abc…’)mysql索引失效会变成全表扫描的操作
+
+      ```mysql
+      explain select * from staffs where name like '%July%';
+      explain select * from staffs where name like '%July';
+      explain select * from staffs where name like 'July%';
+      ```
+
+      <img src="..\笔记图片\索引失效-使用like匹配.png" alt="索引失效-使用like匹配" style="zoom: 100%;" />
+
+      - **like%加右边**
+
+      - 问题：解决like ‘%字符串%’时索引不被使用的方法？
+
+        利用覆盖索引解决两边%的优化问题。
+
+        ```mysql
+        CREATE TABLE `tb1_user`(
+        	id int not null auto_increment,
+        	name varchar(20)  default null,
+        	age int(11) default null ,
+        	email varchar(20)  default null ,
+        	 primary key(`id`)
+        	)engine=innodb auto_increment=1 default charset=utf8;
+         
+        	
+        insert into tb1_user(name,age,email) values ('1aa1','21','b@163.com');
+        insert into tb1_user(name,age,email) values ('2aa2','222','a@163.com');
+        insert into tb1_user(name,age,email) values ('3aa3','265','c@163.com');
+        insert into tb1_user(name,age,email) values ('4aa4','21','d@163.com');
+        
+         create index idx_nameAge on tb1_user(name,age);
+        ```
+
+        ```
+        explain select name,age from tb1_user where name like '%aa%';
+        explain select id from tb1_user where name like '%aa%';
+        explain select name from tb1_user where name like '%aa%';
+        explain select age from tb1_user where name like '%aa%';
+        explain select id,name from tb1_user where name like '%aa%';
+        explain select name,age from tb1_user where name like '%aa%';
+        
+        explain select * from tb1_user where name like '%aa%';
+        explain select id,name,age,email from tb1_user where name like '%aa%';
+        ```
+
+        <img src="..\笔记图片\索引失效-使用like匹配-覆盖索引.png" alt="索引失效-使用like匹配-覆盖索引" style="zoom: 100%;" />
+
+    * 字符串不加单引号索引失效
+
+      ```mysql
+      explain select * from staffs where name='2000';
+      explain select * from staffs where name=2000;
+      ```
+
+      <img src="..\笔记图片\索引失效-字符串未加单引号.png" alt="索引失效-字符串未加单引号" style="zoom: 100%;" />
+
+      该问题同问题3，是索引列上做了类型转换！
+
+      - **VARCHAR类型绝对不能失去单引号!**
+
+    * 少用or，用它来连接时会索引失效
+
+      ```
+      explain select * from staffs name='July' or name='z3';
+      ```
+
+      <img src="..\笔记图片\索引失效-使用or连接.png" alt="索引失效-使用or连接" style="zoom: 100%;" />
+
+    * 总结
+
+      <img src="..\笔记图片\索引失效-总结.png" alt="索引失效-总结" style="zoom: 100%;" />
+
+* 案例讲解
+
+  * 建表
+
+    ```mysql
+    create table test03(
+    	id int primary key not null auto_increment,
+    	c1 char(10),
+    	c2 char(10),
+    	c3 char(10),
+    	c4 char(10),
+    	c5 char(10)
+    );
+    insert into test03(c1,c2,c3,c4,c5) values ('a1','a2','a3','a4','a5');
+    insert into test03(c1,c2,c3,c4,c5) values ('b1','b2','b3','b4','b5');
+    insert into test03(c1,c2,c3,c4,c5) values ('c1','c2','c3','c4','c5');
+    insert into test03(c1,c2,c3,c4,c5) values ('d1','d2','d3','d4','d5');
+    insert into test03(c1,c2,c3,c4,c5) values ('e1','e2','e3','e4','e5');
+    
+    ```
+
+#索引分析
+    explain select * from test03 where c1='a1';
+    explain select * from test03 where c1='a1' and c2='a2';
+    explain select * from test03 where c1='a1' and c2='a2' and c3='a3';
+    explain select * from test03 where c1='a1' and c2='a2' and c3='a3' and c4='a4';
+    #MySQL自带优化 依然可以使用四条索引
+    explain select * from test03 where c1='a1' and c2='a2' and c3='a3' and c4='a4';
+    #范围后失效
+    explain select * from test03 where c1='a1' and c2='a2' and c3>'a3' and c4='a4';
+    
+    explain select * from test03 where c1='a1' and c2='a2' and c4>'a4' and c3='a3';
+    
+    #c3用于排序
+    explain select * from test03 where c1='a1' and c2='a2' and c4>'a4' order by c3;
+    explain select * from test03 where c1='a1' and c2='a2' order by c3;
+    #只用到c1 c2 using filesort
+    explain select * from test03 where c1='a1' and c2='a2' order by c4;
+    #只用c1一个字段索引，但是c2、c3用于排序，无filesort
+    explain select * from test03 where c1='a1' and c5='a5' order by c2,c3;
+    #违背索引顺序，出现了filesort
+    explain select * from test03 where c1='a1' and c5='a5' order by c3,c2;
+    
+    explain select * from test03 where c1='a1' and c2='a2' order by c2,c3;
+    #用c1,c2两个字段索引，但是c2,c3用于排序，无filesort0
+    explain select * from test03 where c1='a1' and c5='a5' order by c2,c3;
+    #有常量c2时为特例，无filesort
+    explain select * from test03 where c1='a1' and c2='a2' and c5='a5' order by c3,c2;
+    
+    explain select * from test03 where c1='a1' and c4='a4' group by c2,c3;
+    #using temporary;using filesort
+    explain select * from test03 where c1='a1' and c4='a4' group by c3,c2;
+    ```
+
+  * 定值、范围还是排序，一般order by是给个范围
+  
+  * group by基本上都需要进行排序，会有临时表产生
+  
+  * 一般性建议
+  
+    - 对于单键索引，尽量选择针对当前query过滤性更好的索引
+    - 在选择组合索引的时候，当前Query中过滤性最好的字段在索引字段顺序中，位置越靠前越好
+    - 在选择组合索引的时候，尽量选择可以能够包含当前query中的where字句中更多字段的索引
+    - 尽可能通过分析统计信息和调整query的写法来达到选择合适索引的目的
+
+### 查询截取分析
+
+- 分析
+  1. 观察，至少跑1天，看看生产的慢SQL情况。
+  2. 开启慢查询日志，设置阈值，比如超过5秒钟的就是慢SQL，并将它抓取出来。
+  3. explain+慢SQL分析
+  4. show profile
+  5. 运维经理 or DBA，进行SQL数据库服务器参数调优。
+- 总结
+  1. 慢查询的开启并捕获
+  2. explain+慢SQL分析
+  3. show profile查询SQL在Mysql服务器里面的执行细节和生命周期情况
+  4. SQL数据库服务器的参数调优
+
+* 查询优化
+  * **永远小表驱动大表**，类似嵌套循环Nested Loop
+
+    * 优化原则：小表驱动大表，即小的数据集驱动大的数据集。
+
+    * 当B表的数据集必须小于A表的数据集时，用in优于exists
+
+      ```mysql
+      select * from a where id in (select id from b)
+      #等价于
+      for select id from b
+      for select * from a where a.id=b.id
+      ```
+
+    * 当A表的数据集必须小于B表的数据集时，用exists优于in
+
+      ```mysql
+      select * from a where exists(select 1 from b where b.id=a.id)
+      #等价于
+      for select * from a
+      for select * from b where b.id=a.id
+      ```
+
+    * 注意：A表与B表的ID字段应建立索引。
+
+    * EXISTS
+
+      1. SELECT … FROM table WHERE EXISTS(subquery)
+      2. 该语法可以理解为：**将主查询的数据，放到子查询中做条件验证，根据验证结果（TRUE或FALSE）来决定主查询的数据结果是否得以保留。**
+
+    * 提示
+
+      1. EXISTS（subquery）只返回TRUE或FALSE，因此子查询中的SELECT *也可以是SELECT 1或SELECT ‘X’，官方说法是实际执行时会忽略SELECT清单，因此没有区别。
+
+      2. EXISTS子查询的实际执行过程可能经过了优化而不是我们理解上的逐条对比，如果担心效率问题，可进行实际检验以确定是否有效率问题。
+      3. EXISTS子查询往往也可以用条件表达式/其他子查询或者JOIN来替代，何种最优需要具体问题具体分析。
+
+    * 总结
+
+      in后面为小表，exists后面为大表
+
+      对于exists的subquery使用可以理解为，讲主查询的数据放入子查询中做条件验证，根据验证结果决定主查询的数据是否保留
+
+  * order by关键字优化
+
+    * ORDER BY子句，尽量使用Index方式排序，避免使用FileSort方式排序
+      * 建表
+
+        ```mysql
+        create table tb1A(
+        	#id int primary key not null auto_increment,
+        	age int,
+        	birth timestamp not null
+         
+        );
+        insert into tb1A(age,birth) values (22,now());
+        insert into tb1A(age,birth) values (23,now());
+        insert into tb1A(age,birth) values (24,now());
+        
+        create index idx_A_ageBirth on tb1A(age,birth);
+        ```
+
+      * Case
+
+        ```mysql
+        explain select * from tb1A where age>20 order by age;
+        explain select * from tb1A where age>20 order by age,birth;
+        explain select * from tb1A where age>20 order by birth;
+        ```
+
+        <img src="..\笔记图片\orderby子句案例1.png" alt="orderby子句案例1" style="zoom: 100%;" />
+
+        ```mysql
+        explain select * from tb1A order by birth;
+        explain select * from tb1a where birth>'2020-01-14 00:00:00' order by birth;
+        explain select * from tb1a where birth>'2020-01-14 00:00:00' order by age;
+        explain select * from tb1A order by age asc,birth desc;
+        ```
+
+        <img src="..\笔记图片\orderby子句案例2.png" alt="orderby子句案例2" style="zoom: 100%;" />
+
+      * MySQL支持两种方式的排序
+
+        - FileSort和Index，Index效率高。FileSort方式效率较低。
+        - Using Index，它指MySQL扫描索引本身完成排序。
+
+      * ORDER BY满足两种情况，会使用Index方式排序：
+
+        - ORDER BY语句使用索引最左前列
+        - 使用Where子句与ORDER BY子句条件列组合满足索引最左前列
+
+    * 尽可能在索引列上完成排序操作，遵照索引建的最佳最前缀
+
+    * 如果不在索引列上，filesort有两种算法：
+
+      mysql就要启动双路排序和单路排序
+
+      - 双路排序
+
+        - MySQL4.1之前是使用双路排序，字面意思就是**两次**扫描磁盘，最终得到数据。读取行指针和order by列，对他们进行排序，然后扫描已经排好序的列表，按照列表中的值重新从列表中读取对应的数据输出。
+        - 从磁盘取排序字段，在buffer进行排序，再从磁盘读取其他字段。
+
+      - 取一批数据，要对磁盘进行了两次扫描，众所周知，I\O是很耗时的，所以在mysql4.1之后，出现了第二种改进的算法，就是单路排序
+
+      - 单路排序
+
+        - 从磁盘读取查询需要的所有列，按照order by列在buffer对它们进行排序，然后扫描排序后的列表进行输出，它的效率更快一些，避免了第二次读取数据。并且把随机IO变成了顺序IO，但是它会使用更多的空间。
+
+      - 结论及引申出的问题
+
+        - 由于单路是后出的，总体而言好过双路
+
+        - 单路存在的问题
+
+          在sort_buffer中，方法B比方法A要多占用很多空间，因为方法B是把所有字段都取出，所以有可能取出的数据的总大小超出了sort_buffer的容量，导致每次只能取sort_buffer容量大小的数据，进行排序(创建tmp文件，多路合并)，排完再取sort_buffer容量大小，再排序，从而多次IO；问题即是多次IO操作（原因：数据的总大小超过sort_buffer的容量）
+
+    * 优化策略
+
+      1. 增大sort_buffer_size参数的设置
+
+      2. 增大max_length_for_sort_data参数的设置
+
+      3. 原因
+
+         提高ORDER BY的速度
+
+         1. order by时select * 是一个大忌，应当只Query需要的字段
+
+            1.1 当Query的字段大小总和小于max_length_for_sort_data而且排序字段不是TEXT|BLOB类型时，回用改进后的算法-单路排序，否则用老算法多路排序
+
+            1.2 两种算法都有可能超出sort_buffer的容量，超出过后，会创建tmp文件进行合并排序，导致多次IO（单路算法的风险更大，所以应提高sort_buffer_size
+
+         2. 尝试提高sort_buffer_size
+
+         3. 尝试提高max_length_for_sort_data
+
+            提高此参数会增加改进算法的概率，但如果设置的太高，数组总容量超出sort_buffer_size的概率就增大，明显症状是高磁盘IO活动和低CPU使用率
+
+    * 总结
+
+      为排序使用索引
+
+      1. MySQL两种排序方式：文件排序或扫描有序索引排序
+      2. MySQL能为排序与查询使用相同的索引
+
+      ```mysql
+      KEY a_b_c(a,b,c)
+      #order by能使用索引最左前缀
+      order by a
+      order by a,b
+      order by a,b,c
+      order by a desc,b desc,c desc
+      
+      #如果where使用索引的最左前缀定义为常量，则order by能使用索引
+      where a=const order by b,c
+      where a=const and b=const order by b,c
+      where a=const and b>const order by b,c
+      
+      #不能用索引进行排序
+      #排序不一致
+      order by a asc,b desc,c desc;
+      #丢失a索引
+      where g=const order by b,c;
+      #丢失b索引
+      where a=const order by c;
+      #d不是索引的一部分
+      where a=const order by a,d;
+      #对于排序来说，多个想等条件也是范围查询
+      where a in(...) order by b,c
+      ```
+
+  * GROUP BY关键字优化
+
+    - group by实质是先排序后进行分组，遵照索引建的最佳左前缀。
+    - 当无法使用索引列，增大max_length_for_sort_data参数的设置+增大sort_buffer_size参数的设置。
+    - where高于having，能写在where限定的条件就不要去having限定了。
+
+### 慢查询日志
+
+### 数据库锁
+
+* MySQL锁机制
+
+  * 锁是计算机协调多个进程并发访问某一资源的机制。
+
+    在数据库中，除传统的计算资源（CPU、RAM、I/O）的争用以外，数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库必须解决的一个问题，锁冲突也是影响数据库并发访问性能的一个重要因素，从这个角度来说，锁对数据库而言显得尤其重要，也更加复杂
+  
+* 锁的分类
+
+  - 从对数据操作的类型（读/写）分
+    - 读锁（共享锁）：针对同一份数据，多个读操作可以同时进行而不会互相影响。
+    - 写锁（排它锁）：当前写操作没有完成前，它会阻断其他写锁和读锁。
+  - 从对数据操作的粒度分
+    - 表锁
+    - 行锁
+
+* 开销、加锁速度、死锁、粒度、并发性能
+
+* 只能就具体应用的特点来说那种锁更合适
+
+* 表锁（偏读锁）
+
+  * 特点：偏向MyISAM存储引擎，开销小，加锁快；无死锁；锁定粒度大，发生锁冲突的概率最高，并发度最低。
+
+  * 案例分析
+
+    - 建表
+
+      ```mysql
+      create table mylock(
+      id int not null primary key auto_increment,
+      name varchar(20)
+      )engine myisam;
+      
+      insert into mylock(name) values('a');
+      insert into mylock(name) values('b');
+      insert into mylock(name) values('c');
+      insert into mylock(name) values('d');
+      insert into mylock(name) values('e');
+      
+      select * from mylock;
+      
+      #手动添加表锁
+      lock table 表名字 read(write), 表名字2 read(write)
+      #查看是否加锁表
+      show open tables;
+      #释放锁
+      unlock tables;
+      ```
+
+    - 加读锁（我们为mylock表加read锁（读阻塞写例子））
+
+      <img src="..\笔记图片\案例-读写锁1.png" alt="案例-读写锁1" style="zoom: 100%;" />
+
+      <img src="..\笔记图片\案例-读写锁2.png" alt="案例-读写锁2" style="zoom: 100%;" />
+
+    - 加写锁（我们为mylock表加write锁（MyISAM存储引擎的写阻塞读例子））
+
+      <img src="..\笔记图片\案例-读写锁3.png" alt="案例-读写锁3" style="zoom: 100%;" />
+
+  * 案例结论
+
+    * 对MyISAM的读操作，不会阻塞其他用户对同一表请求，但会阻塞对同一表的写请求；
+    * 对MyISAM的写操作，则会阻塞其他用户对同一表的读和写操作；
+    * MyISAM表的读操作和写操作之间，以及写操作之间是串行的。
+
+    * 当一个线程获得对一个表的写锁后，只有持有锁线程可以对表进行更新操作。其他线程的读、写操作都会等待，直到锁被释放为止。
+
+  * 表锁分析
+
+    - 看看哪些表被加锁了：show open tables;
+    - 如何分析表锁定：可以通过检查table_locks_waited和table_locks_immediate状态变量来分析系统上的表锁定。
+      - show status like ‘table%’;
+      - 这里有两个状态变量记录MySQL内部表级锁定的情况，两个变量的说明如下：
+        - Table_locks_immediate：产生表级锁定的次数，表示可以立即获取锁的查询次数，每立即获取锁值加1；
+        - Table_locks_waited：出现表级锁定争用而发生等待的次数（不能立即获取锁的次数，每等待一次锁值加1），此值高则说明存在着较严重的表级锁争用情况。
+      - **此外，MyISAM的读写锁调度是写优先，这也是MyISAM不适合做写为主表的引擎。因为写锁后，其他线程不能做任何操作，大量的更新会使查询很难得到锁，从而造成永远阻塞。**
+
+* 行锁（偏写锁）
+
+  * 特点
+
+    * 偏向Innodb存储引擎，开销大，加锁慢；会出现死锁；锁定粒度小，发生锁冲突的概率最低，并发度也最高。
+    * Innodb与MyISAM的最大不同有两点：
+      - 一是支持事务（TRANSACTION）
+      - 而是采用了行级锁
+
+  * 案例分析
+
+    ```mysql
+    # 行锁分析建表
+    create table test(a int(11), b varchar(16))engine=innodb;
+    insert into test(a,b)values(1,'b2'),
+    (3,'3'),(4,'4000'),(5,'5000'),(6,'6000'),(7,'7000'),(8,'8000'),(9,'9000'),(1,'b1');
+    create index idx_test_innodb_a on test(a);
+    create index idx_test_innodb_b on test(b);
+    select * from test;
+    # 自动提交关了，必须手动写commit才能提交
+    set autocommit = 0;
+    ```
+
+    <img src="..\笔记图片\案例-偏写锁1.png" alt="案例-偏写锁1" style="zoom: 100%;" />
+
+  * 无索引行锁升级为表锁
+
+    - 如果在更新数据的时候出现了强制类型转换导致索引失效，使得行锁变表锁，即在操作不同行的时候，会出现阻塞的现象。
+
+  * 间隙锁危害
+
+    ```mysql
+    #进程1
+    update test set b='0629' where a>1 and a<6;
+    #进程2
+    insert into test values(2,'2000');
+    ```
+
+    <img src="..\笔记图片\案例-间隙锁.png" alt="案例-间隙锁" style="zoom: 100%;" />
+
+    * 当我们用范围条件而不是相等条件索引数据，并请求共享或排他锁时，InnoDB会给符合条件的已有数据记录的索引项加锁；对于键值在条件范围内但并不存在的记录，叫做“间隙（GAP）”。InnoDB也会对这个“间隙”加锁，这种锁机制就是所谓的间隙锁（Next-Key锁）。
+    * 危害：
+      1. 因为Query执行过程中通过范围查找的话，会锁定整个范围内所有的索引键值，即使这个键值并不存在。
+      2. 间隙锁有一个比较致命的弱点，就是当锁定一个范围键值之后，即使某些不存在的键值也会被无辜的锁定，而造成在锁定的时候无法插入锁定键值范围内的任何数据。在某些场景下这可能会对性能造成很大的危害。
+
+  * 面试题：常考如何锁定一行
+
+    - select * from 表 where 某一行的条件 for update;
+
+  * 案例结论
+
+    - InnoDB存储引擎由于实现了行级锁定，虽然在锁定机制的实现方面所带来的性能损耗可能比表级锁定会更高一些，但是在整体并发处理能力方面要远远优于MyISAM的表级锁定的。当系统并发量较高的时候，InnoDB的整体性能和MyISAM相比就会有比较明显的优势了。
+    - 但是，InnoDB的行级锁定同样也有其脆弱的一面，当我们使用不当的时候，可能会让InnoDB的整体性能表现不仅不能比MyISAM高，甚至可能会更差。
+
+  * 行锁分析
+
+    - 如何分析行锁定
+
+      - 通过检查InnoDB_row_lock状态变量来分析系统上的行锁的争夺情况
+
+        show status like ‘innodb_row_lock%’;
+
+        <img src="..\笔记图片\案例-行锁分析.png" alt="案例-行锁分析" style="zoom: 100%;" />
+
+      - 对各个状态量的说明如下：
+
+        - Innodb_row_lock_current_waits：当前正在等待锁定的数量；
+        - innodb_row_lock_time：从系统启动到现在锁定总时间长度；
+        - innodb_row_lock_time_avg：每次等待所花平均时间；
+        - innodb_row_lock_time_max：从系统启动到现在等待最长的一次所花的时间；
+        - innodb_row_lock_waits：系统启动后到现在总共等待的次数。
+
+      - 对于这5个变量，比较重要的是
+
+        - innodb_row_lock_time_avg（等待平均时长）
+        - innodb_row_lock_waits（等待总次数）
+        - innodb_row_lock_time（等待总时长）
+        - 这三项尤其是当等待次数很高，而且每次等待时长也不小的时候，我们就需要分析系统中为什么会有如此多的等待，然后根据分析结果着手制定优化计划。
+
+### 主从复制
+
+* 复制的基本原理
+  * slave会从master读取binlog来进行数据同步
+
+  * 三步骤+原理图
+
+    <img src="..\笔记图片\主从复制-三步骤原理图.png" alt="主从复制-三步骤原理图" style="zoom: 100%;" />
+
+  * 复制的基本原则
+  
+    - 每个slave只有一个master
+    - 每个slave只能有一个唯一的服务器ID
+    - 每个master可以有多个slave
+  
+  * 复制的问题
+  
+    * 延时
+  
+  * 一主一从常见配置
+  
+    * mysql版本一致且后台以服务运行
+    * 主从都配置在[mysqld]结点下，都是小写
+    * 主机修改my.ini配置文件
+      - 【必须】主服务器唯一ID
+        - server-id=1
+      - 【必须】启用二进制日志
+        - log-bin=自己本地的路径/mysqlbin
+        - log-bin=D:/devSoft/MySQLServer5.5/data/mysqlbin
+      - 【可选】启用错误日志
+        - log-err=自己本地的路径/mysqlerr
+        - log-err=D:/devSoft/MySQLServer5.5/data/mysqlerr
+      - 【可选】根目录
+        - basedir=自己本地路径
+        - basedir="D:/devSoft/MySQLServer5.5/"
+      - 【可选】临时目录
+        - tmpdir=自己本地路径
+        - tmpdir="D:/devSoft/MySQLServer5.5/"
+      - 【可选】数据目录
+        - datadir=自己本地路径/Data/
+        - datadir="D:/devSoft/MySQLServer5.5/data"
+      - read-only=0
+        - 主机，读写都可以
+      - 【可选】设置不要复制的数据库
+        - binlog-ignore-db=mysql
+      - 【可选】设置需要复制的数据库
+        - binlog-do-db=需要复制的主数据库名字
+  
+  * 从机修改my.cnf配置文件
+  
+    - 【必须】从服务器唯一ID
+      - server-id=2
+    - 【可选】启用二进制日志
+  
+  * 因修改过配置文件，请主机+从机都重启后台mysql服务
+  
+  * 主机从机都关闭防火墙
+  
+    - windows手动关闭
+    - 关闭虚拟机linux防火墙：service iptables stop
+  
+  * 在Windows主机上建立账户并授权slave
+  
+    - `GRANT REPLICATION SLAVE ON *.* TO 'zhangsan' @ '192.168.14.167【从机数据库IP】' IDENTIFIED BY '123456';`
+  
+    - flush privileges;
+  
+    - 查询master的状态
+  
+      - show master status
+  
+        <img src="..\笔记图片\主从复制1.png" alt="主从复制1" style="zoom: 100%;" />
+  
+      - 记录下File和Position的值
+  
+    - 执行完此步骤后不要再操作主服务器MYSQL，防止主服务器状态值变化
+  
+  * 在Linux从机上配置需要复制的主机
+  
+    ```shell
+    CHANGE MASTER TO MASTER_HOST='主机IP', MASTER_USER='zhangsan', MASTER_PASSWORD='123456', MASTER_LOG_FILE='file名字', MASTER_LOG_POS=position数字;
+    ```
+  
+    <img src="..\笔记图片\主从复制2.png" alt="主从复制2" style="zoom: 100%;" />
+  
+  * 启动从服务器复制功能
+  
+    - start slave;
+  
+  * show slave status\G
+  
+    - 下面两个参数都是Yes，则说明主从配置成功！
+  
+    - Slave_IO_Running：Yes
+  
+    - Slave_SQL_Running：Yes
+  
+      <img src="..\笔记图片\主从复制3.png" alt="主从复制3" style="zoom: 100%;" />
+  
+  * 主机新建库、新建表、insert记录，从机复制
+  
+  * 如何停止从服务复制功能
+  
+    - stop slave;

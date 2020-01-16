@@ -437,7 +437,7 @@
 
     虚拟机对象头MarkWord
 
-    ![虚拟机对象头MarkWord](..\笔记图片\虚拟机对象头MarkWord.png)
+    <img src="..\笔记图片\虚拟机对象头MarkWord.png" alt="虚拟机对象头MarkWord">
 
   * 偏向锁
 

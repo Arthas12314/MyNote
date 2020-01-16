@@ -682,9 +682,7 @@ IF EXISTS books;
   	publishDate DATETIME
   );
   ```
-```
   
-
 * 修改
 
   ```mysql
@@ -703,7 +701,7 @@ IF EXISTS books;
   -- 修改表名
   ALTER TABLE author 
   RENAME TO book_author;
-```
+  ```
 
 * 删除
 
@@ -733,6 +731,7 @@ IF EXISTS books;
   WHERE 0;
   ```
 
+
 ### 常见的数据类型
 
 > 选择类型越简单越好，能保存数值的类型越小越好
@@ -760,11 +759,10 @@ IF EXISTS books;
 
 * 集合
 
-  ```
+  ```mysql
   CREATE TABLE tab_set(
-  	s1 SET/ENUM('a','b','c','d')
-  );
-  			
+	  s1 SET/ENUM('a','b','c','d')
+  );		
   ```
 
   集合插入多个，枚举插入一个
@@ -808,26 +806,29 @@ IF EXISTS books;
           CONSTRAINT fk_stuinfo_major FOREIGN KEY(majorid) REFERENCE major(id)
       );
       ```
+```
+
 
     * 主键和UNIQUE：
       主键只能在一个表里有一个，但可以有联合主键（不推荐），UNIQUE可以有多个，也可以组合		
-
+    
     * 外键
       要求在从表设置外键关系、从外的外键列的类型和朱标的关联列的类型要求一致或兼容，名称无要求
       主表的关联列必须是一个key（一般时主键或UNIQUE）
       删除数据时先删从表才能再删除主表
 
-  * 修改表时
-
-    * 列级约束
-
+* 修改表时
+  
+  * 列级约束
+  
       ```mysql
       ALTER TABLE stuinfo 
       MODIFY COLUMN stuname VARCHAR(20) 约束;
-      ```
+```
 
-    * 表级约束
 
+  * 表级约束
+  
       ```mysql
       ALTER TABLE stuinfo 
       ADD UNIQUE(seat);
@@ -836,8 +837,9 @@ IF EXISTS books;
       ADD FOREIGN KEY(majorid) REFERENCE major(id);
       ```
 
-  * 修改表时删除约束
 
+* 修改表时删除约束
+  
     ```mysql
     NOT NULL 改为NULL 默认改为不写 
     
