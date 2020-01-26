@@ -245,4 +245,60 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
 
 3. 改造基于注解的IOC案例，使用纯注解的方式实现即新注解使用
 
+   * spring中的新注解
+
+     * Configuration
+
+       作用：指定当前类是一个配置类
+
+       细节：当配置类作为AnnotationConfigApplicationContext对象创建的参数时，该注解可以不写。
+
+     * ComponentScan
+
+       作用：用于通过注解指定spring在创建容器时要扫描的包
+
+       属性value：它和basePackages的作用是一样的，都是用于指定创建容器时要扫描的包。
+
+       使用此注解就等同于在xml中配置了:
+
+       ```xml
+       <context:component-scan base-package="com.itheima"></context:component-scan>
+       ```
+
+     * Bean
+
+       作用：用于把当前方法的返回值作为bean对象存入spring的ioc容器中
+
+       属性name：用于指定bean的id。当不写时，默认值是当前方法的名称
+
+       细节：当我们使用注解配置方法时，如果方法有参数，spring框架会
+
+       去容器中查找有没有可用的bean对象。
+
+       查找的方式和Autowired注解的作用是一样的
+
+     * PropertySource
+
+       作用：用于指定properties文件的位置
+
+       属性value：指定文件的名称和路径。
+
+       关键字：classpath，表示类路径下
+
 4. Spring和Junit整合
+
+   * Junit单元测试中，没有main方法也能执行，junit集成了一个main方法，该方法就会查找当前测试类中的@Test注解并执行
+   * Junit不检测是否使用Spring框架，因此不会读取配置文件/类、创建Spring核心容器
+
+   * Spring整合junit的配置
+     1. 导入spring整合junit的jar(坐标)
+     2. 使用Junit提供的一个注解把原有的main方法替换了，替换成spring提供的@Runwith
+     3. 告知spring的运行器，spring和ioc创建是基于xml还是注解的，并且说明位置@ContextConfiguration
+        * locations：指定xml文件的位置，加上classpath关键字，表示在类路径下
+        * classes：指定注解类所在地位置
+
+5. 动态代理
+
+6. AOP的概念
+
+7. Spring中基于xml和注解的AOP配置

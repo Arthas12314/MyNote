@@ -806,8 +806,6 @@ IF EXISTS books;
           CONSTRAINT fk_stuinfo_major FOREIGN KEY(majorid) REFERENCE major(id)
       );
       ```
-```
-
 
     * 主键和UNIQUE：
       主键只能在一个表里有一个，但可以有联合主键（不推荐），UNIQUE可以有多个，也可以组合		
@@ -824,8 +822,7 @@ IF EXISTS books;
       ```mysql
       ALTER TABLE stuinfo 
       MODIFY COLUMN stuname VARCHAR(20) 约束;
-```
-
+      ```
 
   * 表级约束
   
@@ -836,7 +833,6 @@ IF EXISTS books;
       ALTER TABLE stuinfo 
       ADD FOREIGN KEY(majorid) REFERENCE major(id);
       ```
-
 
 * 修改表时删除约束
   
