@@ -299,6 +299,177 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
 
 5. 动态代理
 
+* 特点：字节码随用随创建，随用随加载
+
+* 作用：不修改源码的基础上对方法增强
+
+* 分类：
+
+  * 基于子类的动态代理
+
+    * 涉及的类：Enhancer
+
+    * 提供者：第三方cglib库
+
+    * 如何创建代理对象：使用Enhancer类中的create方法
+
+    * 创建代理对象的要求：被代理类不能是最终类
+
+    * create方法的参数：
+
+      1. Class：字节码
+
+         它是用于指定被代理对象的字节码。
+
+      2. Callback：用于提供增强的代码
+
+         它是让我们写如何代理。我们一般都是些一个该接口的实现类，通常情况下都是匿名内部类，但不是必须的。
+
+         我们一般写的都是该接口的子接口实现类：MethodInterceptor 
+
+         此接口的实现类都是谁用谁写
+
+  * 基于接口的动态代理：
+
+    * 涉及的类：
+
+    * 如何创建代理对象：使用Proxy类中的newProxyInstance方法
+
+    * 创建代理对象的要求：被代理类最少实现一个接口，如果没有则不能使用  
+
+    * newProxyInstance方法的参数：
+
+      1. ClassLoader：类加载器
+
+         它是用于加载代理对象字节码的。和被代理对象使用相同的类加载器。固定写法。
+
+      2. Class[]：字节码数组
+
+         它是用于让代理对象和被代理对象有相同方法。固定写法。*      
+
+      3. InvocationHandler：用于提供增强的代码
+
+         它是让我们写如何代理。我们一般都是些一个该接口的实现类，通常情况下都是匿名内部类，但不是必须的。此接口的实现类都是谁用谁写。
+
 6. AOP的概念
 
-7. Spring中基于xml和注解的AOP配置
+* Joinpoint(连接点): 所谓连接点是指那些被拦截到的点。在 spring 中,这些点指的是方法,因为 spring 只支持方法类型的连接点。 
+* Pointcut(切入点): 所谓切入点是指我们要对哪些 Joinpoint 进行拦截的定义。
+* Advice(通知/增强): 所谓通知是指拦截到 Joinpoint 之后所要做的事情就是通知。通知的类型：前置通知,后置通知,异常通知,最终通知,环绕通知。 
+
+* Introduction(引介): 引介是一种特殊的通知在不修改类代码的前提下, Introduction 可以在运行期为类动态地添加一些方法或 Field。 
+* Target(目标对象): 代理的目标对象。 
+* Weaving(织入): 是指把增强应用到目标对象来创建新的代理对象的过程。 spring 采用动态代理织入，而 AspectJ 采用编译期织入和类装载期织入。 
+* Proxy（代理）: 一个类被 AOP 织入增强后，就产生一个结果代理类。 
+* Aspect(切面): 是切入点和通知（引介）的结合。
+
+6. Spring中基于xml和注解的AOP配置
+
+* spring中基于XML的AOP配置步骤
+
+  1. 把通知Bean也交给spring来管理
+
+  2. 使用aop:config标签表明开始AOP的配置
+
+  3. 使用aop:aspect标签表明配置切面           
+
+     id属性：是给切面提供一个唯一标识
+
+     ref属性：是指定通知类bean的Id。    
+
+  4. 在aop:aspect标签的内部使用对应标签来配置通知的类型
+
+     我们现在示例是让printLog方法在切入点方法执行之前之前：所以是前置通知 
+
+     aop:before：表示配置前置通知
+
+     * method属性：用于指定Logger类中哪个方法是前置通知                
+     * pointcut属性：用于指定切入点表达式，该表达式的含义指的是对业务层中哪些方法增强        
+
+     切入点表达式的写法：
+
+     * 关键字：execution(表达式) 
+
+     * 表达式：
+
+       访问修饰符  返回值  包名.包名.包名...类名.方法名(参数列表)            标准的表达式写法：                
+
+       ​	public void com.itheima.service.impl.AccountServiceImpl.saveAccount()            访问修饰符可以省略
+
+       ​	void com.itheima.service.impl.AccountServiceImpl.saveAccount()            返回值可以使用通配符，表示任意返回值
+
+       ​	\* com.itheima.service.impl.AccountServiceImpl.saveAccount()            包名可以使用通配符，表示任意包。但是有几级包，就需要写几个
+
+       ​	\* \*.\*.\*.\*.AccountServiceImpl.saveAccount())
+
+       包名可以使用..表示当前包及其子包 
+
+       ​	\* \*..AccountServiceImpl.saveAccount() 
+
+       类名和方法名都可以使用*来实现通配
+
+       ​	\*..\*.\*() 
+
+       参数列表：可以直接写数据类型：
+
+       1. 基本类型直接写名称           int
+       2. 引用类型写包名.类名的方式   java.lang.String 
+
+       可以使用通配符表示任意类型，但是必须有参数
+
+       可以使用..表示有无参数均可，有参数可以是任意类型
+
+       全通配写法：
+
+       ​	\*..\*.\*(..)            
+
+       实际开发中切入点表达式的通常写法：
+
+       切到业务层实现类下的所有方法
+
+       ​	\* com.itheima.service.impl.\*.\*(..)
+
+* @Pointcut 
+
+  作用： 指定切入点表达式 
+
+  属性：
+
+  ​	value：指定表达式的内容 
+
+  ```java
+  @Pointcut("execution(* com.itheima.service.impl.*.*(..))") 
+  private void pt1() {}
+  
+  引用方式：
+  /**
+  * 环绕通知
+  * @param pjp
+  * @return
+  */
+  @Around("pt1()")//注意：千万别忘了写括号
+  public Object transactionAround(ProceedingJoinPoint pjp) {
+      //定义返回值
+      Object rtValue = null;
+      try {
+          //获取方法执行所需的参数
+          Object[] args = pjp.getArgs();
+          //前置通知：开启事务
+          beginTransaction();
+          //执行方法
+          rtValue = pjp.proceed(args);
+          //后置通知：提交事务
+          commit();
+  	}catch(Throwable e) {
+          //异常通知：回滚事务
+          rollback();
+          e.printStackTrace();
+  	}finally {
+          //最终通知：释放资源
+          release();
+  	}
+  	return rtValue;
+  }
+  ```
+
+  
