@@ -472,4 +472,133 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
   }
   ```
 
-  
+### 6.Spring中JDBCTemplate
+
+* JdbcTemplate的作用：用于和数据库交互，实现CRUD
+
+* 如何创建
+
+  ```xml
+  <!-- 配置一个数据库的操作模板：JdbcTemplate -->
+  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+  <property name="dataSource" ref="dataSource"></property>
+  </bean>
+  ```
+
+* 常用方法
+  * 第一种方式：在 dao 中定义 JdbcTemplate
+  * 第二种方式：让 dao 继承 JdbcDaoSupport
+  * 区别：
+    * 第一种在 Dao 类中定义 JdbcTemplate 的方式，适用于所有配置方式（xml 和注解都可以）。 
+    * 第二种让 Dao 继承 JdbcDaoSupport 的方式，只能用于基于 XML 的方式，注解用不了。
+
+### 7.Spring中事务控制
+
+* API
+
+  * PlatformTransactionManager接口提供事务操作的方法，包含有3个具体的操作
+
+    * 获取事务状态信息
+
+      TransactionStatus getTransaction(TranscationDefinition definition)
+
+    * 提交事务
+
+      void commit(TransactionStatus status)
+
+    * 回滚事务
+
+      void rollback(TransactionStatus status)
+
+  * 真正管理事务的对象 org.springframework.jdbc.datasource.DataSourceTransactionManager 使用 Spring JDBC 或 iBatis 进行持久化数据时使用 org.springframework.orm.hibernate5.HibernateTransactionManager 使用 Hibernate 版本进行持久化数据时使用
+
+  * TransactionDefinition
+
+    * 获取事务对象名称
+
+      String getName()
+
+    * 获取事务隔离级别
+
+      int getIsolationLevel()
+
+    * 获取事务传播行为
+
+      int getPropagationBehavior
+
+      事务的传播行为
+
+      * REQUIRED:如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。一般的选择（默认值）
+      * SUPPORTS:支持当前事务，如果当前没有事务，就以非事务方式执行（没有事务）
+      * MANDATORY：使用当前的事务，如果当前没有事务，就抛出异常 
+      * REQUERS_NEW:新建事务，如果当前在事务中，把当前事务挂起。 
+      * NOT_SUPPORTED:以非事务方式执行操作，如果当前存在事务，就把当前事务挂起
+      * NEVER:以非事务方式运行，如果当前存在事务，抛出异常
+      * NESTED:如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行REQUIRED 类似的操作。
+
+    * 获取事务超时时间
+
+      int getTimeout()
+
+    * 获取事务是否只读
+
+      boolean isReadOnly()
+
+  * TransactionStatus接口描述了某个时间点上事务对象的状态信息，包含六个具体的操作
+
+    * 刷新事务
+
+      void flush()
+
+    * 获取是否存在储存点
+
+      boolean isCompleted()
+
+    * 获取事务是否完成
+
+      boolean isNewTransaction()
+
+    * 获取事务是否回滚
+
+      boolean isRollbackOnly()
+
+      设置事务回滚
+
+      void setRollbackOnly()
+
+* 基于XML
+
+  1. 配置事务管理器
+
+  2. 配置事务的通知
+
+     此时我们需要导入事务的约束tx名称空间和约束，同时也需要aop的        使用tx:advice标签配置事务通知
+
+     属性：
+
+     * id：给事务通知起一个唯一标识
+     * transaction-manager：给事务通知提供一个事务管理器引用
+
+  3. 配置AOP中的通用切入点表达式
+
+  4. 建立事务通知和切入点表达式的对应关系
+
+  5. 配置事务的属性
+
+     在事务的通知tx:advice标签的内部
+
+     * isolation：用于指定事务的隔离级别。默认值是DEFAULT，表示使用数据库的默认隔离级别。
+     * propagation：用于指定事务的传播行为。默认值是REQUIRED，表示一定会有事务，增删改的选择。查询方法可以选择SUPPORTS。
+     * read-only：用于指定事务是否只读。只有查询方法才能设置为true。默认值是false，表示读写。
+     * timeout：用于指定事务的超时时间，默认值是-1，表示永不超时。如果指定了数值，以秒为单位。
+     * rollback-for：用于指定一个异常，当产生该异常时，事务回滚，产生其他异常时，事务不回滚。没有默认值。表示任何异常都回滚。
+     * no-rollback-for：用于指定一个异常，当产生该异常时，事务不回滚，产生其他异常时事务回滚。没有默认值。表示任何异常都回滚。
+
+* 基于注解
+
+  1. 配置事务管理器
+  2. 开启spring对注解事务的支持
+  3. 在需要事务支持的地方使用@Transactional注解
+
+### 8.Spring5新特性
+
