@@ -1,6 +1,6 @@
 
 
-## Nosql
+# Nosql
 
 > NoSQL：即Not-Only SQL（泛指非关系型的数据库），作为关系型数据库的补充。
 >
@@ -12,7 +12,7 @@
 
 <img src="..\笔记图片\电商解决方案.png" alt="电商解决方案" style="zoom: 50%;" />
 
-## Redis
+## Redis基础
 
 > Redis (REmote DIctionaryServer) 是用C 语言开发的一个开源的高性能键值对（key-value）数据库。
 
@@ -501,3 +501,742 @@
 
 ### Jedis
 
+* 基于连接池获取连接
+
+  * JedisPool：Jedis提供的连接池技术
+  * poolConfig:连接池配置对象
+  * host:redis服务地址
+  * port:redis服务端口号
+
+  ```java
+  public JedisPool(GenericObjectPoolConfig poolConfig, String host, int port){
+  	this(poolConfig, host, port, 2000, (String)null, 0, (String)null);
+  }
+  ```
+
+  * jedis.properties
+
+    * jedis.host=localhost
+    * jedis.port=6379
+    * jedis.maxTotal=30
+    * jedis.maxIdle=10
+
+  * 静态代码块初始化资源
+
+    ```java
+    static{
+    	//读取配置文件获得参数值
+    	ResourceBundle rb = ResourceBundle.getBundle("jedis");
+        host = rb.getString("jedis.host");
+        port = Integer.parseInt(rb.getString("jedis.port"));
+        maxTotal = Integer.parseInt(rb.getString("jedis.maxTotal"));
+        maxIdle = Integer.parseInt(rb.getString("jedis.maxIdle"));
+        poolConfig = new JedisPoolConfig();poolConfig.setMaxTotal(maxTotal);
+        poolConfig.setMaxIdle(maxIdle);
+        jedisPool = new JedisPool(poolConfig,host,port);
+    }
+    ```
+
+  * 对外访问接口，提供jedis连接对象，连接从连接池获取
+
+    ```java
+    public static Jedis getJedis(){
+    	Jedis jedis = jedisPool.getResource();return jedis;
+    }
+    ```
+
+## Redis高级
+
+### Redis安装
+
+* 基于Center OS7安装Redis
+
+  * 下载安装包wgethttp://download.redis.io/releases/redis-?.?.?.tar.gz
+  * 解压tar –xvf文件名.tar.gz
+  * 编译make
+  * 安装make install [destdir=/目录]
+
+* Redis基础环境设置
+
+  * 创建软链接ln -s 原始目录名快速访问目录名
+
+  * 创建配置文件管理目录
+
+    mkdir conf / mkdir config
+
+  * 创建数据文件管理目录mkdirdata
+
+* Redis服务启动
+
+  * 默认配置启动
+
+    redis-serverredis-server  –-port 6379
+
+    redis-server  –-port 6380 ......
+
+  * 指定配置文件启动
+
+    redis-server  redis.conf
+
+    redis-server  redis-6379.conf
+
+    redis-server  redis-6380.conf ......
+
+    redis-server  conf/redis-6379.conf
+
+    redis-server  config/redis-6380.conf ......
+
+  * Redis客户端连接
+
+    * 默认连接
+
+      redis-cli
+
+    * 连接指定服务器
+
+      redis-cli  -h  127.0.0.1
+
+      redis-cli  –port  6379
+
+      redis-cli  -h  127.0.0.1  –port   6379
+
+  * Redis服务端配置
+
+  * 基本配置
+
+    * daemonize yes
+
+      以守护进程方式启动，使用本启动方式，redis将以服务的形式存在，日志将不再打印到命令窗口中
+
+    * port  6\*\*\*
+
+      设定当前服务启动端口号
+
+    * dir“/自定义目录/redis/data“
+
+      设定当前服务文件保存位置，包含日志文件、持久化文件（后面详细讲解）等
+
+    * logfile"6\*\*\*.log“
+
+      设定日志文件名，便于查阅
+
+### 持久化
+
+* 简介
+
+  * 概念
+
+    利用永久性存储介质将数据进行保存，在特定的时间将保存的数据进行恢复的工作机制称为持久化
+
+  * 意义
+
+    防止数据的意外丢失，确保数据安全性
+
+  * 两种方式
+
+    * RDB将当前数据状态进行保存，快照形式，存储数据结果，存储格式简单，关注点在数据
+    * AOF将数据的操作过程进行保存，日志形式，存储操作过程，存储格式复杂，关注点在数据的操作过程
+
+* RDB
+
+  * 启动方式save
+
+    手动执行一次保存
+
+  * save指令相关配置
+
+    * dbfilename dump.rdb
+
+      说明：设置本地数据库文件名，默认值为dump.rdb
+
+      经验：通常设置为dump-端口号.rdb
+
+    * dir
+
+      说明：设置存储.rdb文件的路径
+
+      经验：通常设置成存储空间较大的目录中，目录名称data
+
+    * rdbcompression yes
+
+      说明：设置存储至本地数据库时是否压缩数据，默认为yes，采用LZF 压缩
+
+      经验：通常默认为开启状态，如果设置为no，可以节省CPU 运行时间，但会使存储的文件变大（巨大）
+
+    * rdbchecksum yes
+
+      说明：设置是否进行RDB文件格式校验，该校验过程在写文件和读文件过程均进行
+
+      经验：通常默认为开启状态，如果设置为no，可以节约读写性过程约10%时间消耗，但是存储一定的数据损坏风险
+
+  * 启动方式bgsave
+
+    手动启动后台保存操作，但不是立即执行
+
+  * 工作原理
+
+    <img src="..\笔记图片\bgsave指令工作原理.png" alt="bgsave指令工作原理" style="zoom: 50%;" />
+
+  * bdsave相关配置
+
+    * dbfilename dump.rdb
+
+    * dir
+
+    * rdbcompression yes
+
+    * rdbchecksum yes
+
+    * stop-writes-on-bgsave-error yes
+
+      说明：后台存储过程中如果出现错误现象，是否停止保存操作
+
+      经验：通常默认为开启状态
+  
+  * save配置
+  
+    * 配置
+  
+      save second changes 
+  
+    * 作用
+  
+      满足限定时间范围内key的变化数量达到指定数量即进行持久化
+  
+    * 参数
+  
+      second：监控时间范围
+  
+      changes：监控key的变化量
+  
+      位置在conf文件中进行配置
+  
+    * 范例
+  
+      save 900 1 
+  
+      save 300 10
+  
+      save 60 10000
+  
+    * 原理
+  
+      <img src="..\笔记图片\save配置原理.png" alt="save配置原理" style="zoom: 50%;" />
+  
+    * 注意
+  
+      save配置要根据实际业务情况进行设置，频度过高或过低都会出现性能问题，结果可能是灾难性的
+  
+      save配置中对于second与changes设置通常具有互补对应关系，尽量不要设置成包含性关系
+  
+      save配置启动后执行的是bgsave操作
+  
+  * rdb特殊启动形式
+  
+    * 全量复制
+  
+    * 服务器运行过程中重启
+  
+      debug reload
+  
+    * 关闭服务器时指定保存数据
+  
+      shutdown save
+  
+  * 优劣
+  
+    * 优势
+  
+      RDB是一个紧凑压缩的二进制文件，存储效率较高
+  
+      RDB内部存储的是redis在某个时间点的数据快照，非常适合用于数据备份，全量复制等场景
+  
+      RDB恢复数据的速度要比AOF快很多
+  
+      应用：服务器中每X小时执行bgsave备份，并将RDB文件拷贝到远程机器中，用于灾难恢复。
+  
+    * 劣势
+  
+      RDB方式无论是执行指令还是利用配置，无法做到实时持久化，具有较大的可能性丢失数据
+  
+      bgsave指令每次运行要执行fork操作创建子进程，要牺牲掉一些性能
+  
+      Redis的众多版本中未进行RDB文件格式的版本统一，有可能出现各版本服务之间数据格式无法兼容现象
+  
+* AOF
+
+  * 简介
+
+    * AOF(append only file)持久化：以独立日志的方式记录每次写命令，重启时再重新执行AOF文件中命令达到恢复数据的目的。与RDB相比可以简单描述为改记录数据为记录数据产生的过程
+    * AOF的主要作用是解决了数据持久化的实时性，目前已经是Redis持久化的主流方式
+
+  * 写数据的策略
+
+    * always(每次）每次写入操作均同步到AOF文件中，数据零误差，性能较低，不建议使用。
+    * everysec（每秒）每秒将缓冲区中的指令同步到AOF文件中，数据准确性较高，性能较高，建议使用，也是默认配置在系统突然宕机的情况下丢失1秒内的数据
+    * no（系统控制）由操作系统控制每次同步到AOF文件的周期，整体过程不可控
+
+  * AOF功能开启
+
+    * 配置 appendonly yes|no
+
+      作用 是否开启AOF持久化功能，默认为不开启状态
+
+    * 配置 appendfsync always|everysec|no 
+
+      作用 AOF 写数据策略
+
+    * 配置 appendfilename filename
+
+      作用  AOF持久化文件名，默认文件名未appendonly.aof，建议配置为 appendonly-端口号.aof
+
+    * 配置 dir
+
+      作用 AOF持久化文件保存路径，与RDB持久化文件保持一致即可
+
+  * AOF重写
+
+    随着命令不断写入AOF，文件会越来越大，为了解决这个问题，Redis引入了AOF重写机制压缩文件体积。AOF文件重写是将Redis进程内的数据转化为写命令同步到新AOF文件的过程。简单说就是将对同一个数据的若干个条命令执行结果转化成最终结果数据对应的指令进行记录。
+
+    * 作用
+
+      降低磁盘占用量，提高磁盘利用率
+
+      提高持久化效率，降低持久化写时间，提高IO性能
+
+      降低数据恢复用时，提高数据恢复效率
+
+    * AOF重写规则
+
+      1. 进程内已超时的数据不再写入文件
+      2. 忽略无效指令，重写时使用进程内数据直接生成，这样新的AOF文件只保留最终数据的写入命令如del key1、hdelkey2、sremkey3、set key4 111、set key4 222等
+      3. 对同一数据的多条写命令合并为一条命令如lpushlist1 a、lpushlist1 b、lpushlist1 c 可以转化为：lpushlist1 a b c。为防止数据量过大造成客户端缓冲区溢出，对list、set、hash、zset等类型，每条指令最多写入64个元素
+
+    * AOF重写方式
+
+      * 手动重写 
+
+        bgrewriteaof 
+
+      * 自动重写 
+
+        auto-aof-rewrite-min-size size 
+
+        auto-aof-rewrite-percentage percentage
+
+    * 自动重写方式
+
+      * 自动重写触发条件设置
+
+        auto-aof-rewrite-min-size size
+
+        auto-aof-rewrite-percentage percent
+
+      * 自动重写触发比对参数（运行指令info Persistence获取具体信息）
+
+        aof_current_size
+
+        aof_base_size
+
+      * 自动重写触发条件
+
+        aof_current_size>=auto-aof-rewrite-min-size
+
+        (aof_current_size-aof_base_size/aof_base_size)>=auto-aof-rewrite-percentage
+
+    * AOF重写流程
+
+      <img src="..\笔记图片\AOF重写流程.png" alt="AOF重写流程" style="zoom: 50%;" />
+
+* RBD对比AOF
+
+  <img src="..\笔记图片\RBD对比AOF.png" alt="RBD对比AOF" style="zoom: 50%;" />
+
+  * 对数据非常敏感，建议使用默认的AOF持久化方案
+    * AOF持久化策略使用everysecond，每秒钟fsync一次。该策略redis仍可以保持很好的处理性能，当出现问题时，最多丢失0-1秒内的数据。
+    * 注意：由于AOF文件存储体积较大，且恢复速度较慢
+  * 数据呈现阶段有效性，建议使用RDB持久化方案
+    * 数据可以良好的做到阶段内无丢失（该阶段是开发者或运维人员手工维护的），且恢复速度较快，阶段点数据恢复通常采用RDB方案
+    * 注意：利用RDB实现紧凑的数据持久化会使Redis降的很低，慎重
+  * 综合比对
+    * RDB与AOF的选择实际上是在做一种权衡，每种都有利有弊
+    * 如不能承受数分钟以内的数据丢失，对业务数据非常敏感，选用AOF
+    * 如能承受数分钟以内的数据丢失，且追求大数据集的恢复速度，选用RDB
+    * 灾难恢复选用RDB
+    * 双保险策略，同时开启RDB 和AOF，重启后，Redis优先使用AOF 来恢复数据，降低丢失数据的量
+
+* 应用场景
+
+  以下可考虑使用
+
+  * 应用于抢购，限购类、限量发放优惠卷、激活码等业务的数据存储设计
+  * 应用于具有操作先后顺序的数据控制
+  * 应用于最新消息展示
+  * 应用于基于黑名单与白名单设定的服务控制
+  * 应用于计数器组合排序功能对应的排名
+
+### 事务
+
+* 简介
+
+  redis事务就是一个命令执行的队列，将一系列预定义命令包装成一个整体（一个队列）。当执行时，一次性按照添加顺序依次执行，中间不会被打断或者干扰。
+
+  一个队列中，一次性、顺序性、排他性的执行一系列命令
+
+* 事务的基本操作
+
+  * 开启事务 mutli
+    * 作用 设定事务的开启位置，此指令执行后，后续的所有指令均加入到事务中
+  * 执行事务 exec
+    * 作用 设定事务的结束位置，同时执行事务。与multi成对出现，成对使用
+  * 注意：加入事务的命令暂时进入到任务队列中，并没有立即执行，只有执行exec命令才开始执行
+  * 取消事务 discard
+    * 作用 终止当前事务的定义，发生在multi之后，exec之前
+
+* 事务的工作流程
+
+<img src="..\笔记图片\事务的工作流程.png" alt="事务的工作流程" style="zoom: 50%;" />
+
+* 事务的注意事项
+
+  * 定义事务的过程中，命令格式输入错误
+
+    * 处理结果
+
+      如果定义的事务中所包含的命令存在语法错误，整体事务中所有命令均不会执行。包括那些语法正确的命令。
+
+  * 定义事务的过程中，命令执行出现错误怎么办？
+
+    运行错误指命令格式正确，但是无法正确的执行。例如对list进行incr操作
+
+    * 处理结果
+
+      能够正确运行的命令会执行，运行错误的命令不会被执行
+
+  * 注意：已经执行完毕的命令对应的数据不会自动回滚，需要程序员自己在代码中实现回滚。
+
+  * 手动进行事务回滚
+
+    * 记录操作过程中被影响的数据之前的状态
+      1. 单数据：string
+      2. 多数据：hash、list、set、zset
+    * 设置指令恢复所有的被修改的项
+      1. 单数据：直接set（注意周边属性，例如时效）
+      2. 多数据：修改对应值或整体克隆复制
+
+* 锁
+
+  * 对key 添加监视锁，在执行exec前如果key发生了变化，终止事务执行
+
+    watch key1 [key2......]
+
+  * 取消对所有key 的监视
+
+    unwatch
+
+  * 应用基于状态控制的批量任务执行
+
+* 应用基于分布式锁对应的场景控制
+
+  * 业务场景
+
+    天猫双11热卖过程中，对已经售罄的货物追加补货，且补货完成。客户购买热情高涨，3秒内将所有商品购买完毕。本次补货已经将库存全部清空，如何避免最后一件商品不被多人同时购买？【超卖问题】
+
+  * 分析
+
+    使用watch监控一个key有没有改变已经不能解决问题，此处要监控的是具体数据
+
+    虽然redis是单线程的，但是多个客户端对同一数据同时进行操作时，如何避免不被同时修改
+
+  * 方案
+
+    * 使用setnx设置一个公共锁利用 setnx lock-key value
+
+      setnx命令的返回值特征，有值则返回设置失败，无值则返回设置成功
+
+    * 对于返回设置成功的，拥有控制权，进行下一步的具体业务操作
+    * 对于返回设置失败的，不具有控制权，排队或等待操作完毕通过del操作释放锁
+    * 注意：上述解决方案是一种设计概念，依赖规范保障，具有风险性
+
+  * 改良
+
+    * 使用expire为锁key添加时间限定，到时不释放，放弃锁
+
+      expire lock-key second 
+
+      pexpire lock-key milliseconds
+
+    * 由于操作通常都是微秒或毫秒级，因此该锁定时间不宜设置过大。具体时间需要业务测试后确认。
+
+      例如：持有锁的操作最长执行时间127ms，最短执行时间7ms。
+
+      测试百万次最长执行时间对应命令的最大耗时，测试百万次网络延迟平均耗时
+
+      锁时间设定推荐：最大耗时*120%+平均网络延迟*110%
+
+      如果业务最大耗时<<网络平均延迟，通常为2个数量级，取其中单个耗时较长即可
+
+### Redis删除策略
+
+* 过期数据
+  * Redis是一种内存级数据库，所有数据均存放在内存中，内存中的数据可以通过TTL指令获取其状态
+    * XX：具有时效性的数据
+    * -1：永久有效的数据
+    * -2：已经过期的数据或被删除的数据或未定义的数据Redis中的数据特征
+
+* 数据删除策略
+
+  1. 定时删除
+
+     * 创建一个定时器，当key设置有过期时间，且过期时间到达时，由定时器任务立即执行对键的删除操作
+     * 优点：节约内存，到时就删除，快速释放掉不必要的内存占用
+     * 缺点：CPU压力很大，无论CPU此时负载量多高，均占用CPU，会影响redis服务器响应时间和指令吞吐量
+     * 总结：用处理器性能换取存储空间（拿时间换空间）
+
+  2. 惰性删除
+
+     * 数据到达过期时间，不做处理。等下次访问该数据时如果未过期，返回数据，发现已过期，删除，返回不存在
+     * 优点：节约CPU性能，发现必须删除的时候才删除
+     * 缺点：内存压力很大，出现长期占用内存的数据
+     * 总结：用存储空间换取处理器性能 expireIfNeeded()（拿时间换空间）
+
+  3. 定期删除
+
+     周期性轮询redis库中的时效性数据，采用随机抽取的策略，利用过期数据占比的方式控制删除频度
+
+     * Redis启动服务器初始化时，读取配置server.hz的值，默认为10
+
+     * 每秒钟执行server.hz次serverCron()->databasesCron()->activeExpireCycle()
+
+     * activeExpireCycle()对每个expires[*]逐一进行检测，每次执行250ms/server.hz*
+
+     * 对某个expires[\*]检测时，随机挑选W个key检测
+
+       1. 如果key超时，删除key
+       2. 如果一轮中删除的key的数量>W*25%，循环该过程*
+       3. 如果一轮中删除的key的数量≤W\*25%，检查下一个expires[\*]，0-15循环
+       4. W取值=ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP属性值
+
+     * 参数current_db用于记录activeExpireCycle()进入哪个expires[*]执行
+
+     * 如果activeExpireCycle()执行时间到期，下次从current_db继续向下执行
+
+     * 特点：
+
+       CPU性能占用设置有峰值，检测频度可自定义设置
+
+       内存压力不是很大，长期占用内存的冷数据会被持续清理
+
+  4. 对比
+
+     * 定时删除
+
+       节约内存，无占用 不分时段占用CPU资源，频度高 拿时间换空间
+
+     * 惰性删除
+
+       内存占用严重 延时执行，CPU利用率高 拿空间换时间
+
+     * 定期删除
+
+       内存定期随机清理 每秒花费固定的CPU资源维护内存 随机抽查，重点抽查
+
+* 逐出算法
+
+  * 新数据进入检测
+
+    * Redis使用内存存储数据，在执行每一个命令前，会调用freeMemoryIfNeeded()检测内存是否充足。如果内存不满足新加入数据的最低存储要求，redis要临时删除一些数据为当前指令清理存储空间。清理数据的策略称为逐出算法。
+    * 注意：逐出数据的过程不是100%能够清理出足够的可使用的内存空间，如果不成功则反复执行。当对所有数据尝试完毕后，如果不能达到内存清理的要求，将出现错误信息
+
+  * 影响数据逐出的相关配置
+
+    * 最大可使用内存 maxmemory
+
+      占用物理内存的比例，默认值为0，表示不限制。生产环境中根据需求设定，通常设置在50%以上。
+
+    * 每次选取待删除数据的个数 maxmemory-samples
+
+      选取数据时并不会全库扫描，导致严重的性能消耗，降低读写性能。因此采用随机获取数据的方式作为待检测删除数据
+
+    * 删除策略 maxmemory-policy
+
+      达到最大内存后的，对被挑选出来的数据进行删除的策略
+
+  * 影响数据逐出的相关配置
+
+    * 检测易失数据（可能会过期的数据集server.db[i].expires ）
+
+      ①volatile-lru：挑选最近最少使用的数据淘汰
+
+      ②volatile-lfu：挑选最近使用次数最少的数据淘汰
+
+      ③volatile-ttl：挑选将要过期的数据淘汰
+
+      ④volatile-random：任意选择数据淘汰
+
+    * 检测全库数据（所有数据集server.db[i].dict）
+
+      ⑤allkeys-lru：挑选最近最少使用的数据淘汰
+
+      ⑥allkeys-lfu：挑选最近使用次数最少的数据淘汰
+
+      ⑦allkeys-random：任意选择数据淘汰
+
+    * 放弃数据驱逐
+
+      ⑧no-enviction（驱逐）：禁止驱逐数据（redis4.0中默认策略），会引发错误OOM（Out Of Memory）
+
+  * 数据逐出策略配置依据
+
+    使用INFO命令输出监控信息，查询缓存hit 和miss 的次数，根据业务需求调优Redis配置
+
+### Redis核心配置
+
+* 服务器基础配置
+
+  * 服务器端设定
+
+    * 设置服务器以守护进程的方式运行
+
+      daemonize yes|no
+
+    * 绑定主机地址
+
+      bind 127.0.0.1
+
+    * 设置服务器端口号
+
+      port 6379
+
+    * 设置数据库数量
+
+      databases 16
+
+  * 日志配置
+
+    * 设置服务器以指定日志记录级别
+
+      loglevel debug|verbose|notice|warning
+
+    * 日志记录文件名
+
+      logfile 端口号.log
+
+    * 注意：日志级别开发期设置为verbose即可，生产环境中配置为notice，简化日志输出量，降低写日志IO的频度
+
+  * 客户端配置
+
+    * 设置同一时间最大客户端连接数，默认无限制。当客户端连接到达上限，Redis会关闭新的连接
+
+      maxclients 0（设置为0表示不作限制
+
+    * 客户端闲置等待最大时长，达到最大值后关闭连接。如需关闭该功能，设置为0
+
+      timeout 300
+
+  * 多服务器快捷配置
+
+    * 导入并加载指定配置文件信息，用于快速创建redis公共配置较多的redis实例配置文件，便于维护include/path/server-端口号.conf
+
+### 高级数据类型
+
+* Bitmaps
+
+  * 基础操作
+
+    * 获取指定key对应偏移量上的bit值
+
+      getbitkey offset
+
+    * 设置指定key对应偏移量上的bit值，value只能是1或0
+
+      setbit key offset value
+
+  * 扩展操作
+
+    * 业务场景
+
+      1. 统计每天某一部电影是否被点播
+      2. 统计每天有多少部电影被点播
+      3. 统计每周/月/年有多少部电影被点播
+      4. 统计年度哪部电影没有被点播
+
+    * 对指定key按位进行交、并、非、异或操作，并将结果保存到destKey中
+
+      bitop op destKey key1 [key2...]
+
+      and 交 or 并 not 非 xo 异或
+
+    * 统计指定key中1的数量
+
+      bitcount key [start end]
+
+  * Tips ：redis应用于信息状态统计
+
+* Hyperloglog
+
+  * 统计独立UV
+
+    * 原始方案：set 存储每个用户的id（字符串）
+    * 改进方案：Bitmaps 存储每个用户状态（bit）
+    * 全新的方案：Hyperloglog
+
+  * 基数
+
+    * 基数是数据集去重后元素个数
+    * HyperLogLog是用来做基数统计的，运用了LogLog的算法
+
+  * 基本操作
+
+    * 添加数据
+
+      pfadd key element [element ...]
+
+    * 统计数据
+
+      pfcount key [key ...]
+
+    * 合并数据
+
+      pfmerge destkey sourcekey [sourcekey...]
+
+  * 相关说明
+
+    * 用于进行基数统计，不是集合，不保存数据，只记录数量而不是具体数据
+    * 核心是基数估算算法，最终数值存在一定误差
+    * 误差范围：基数估计的结果是一个带有0.81% 标准错误的近似值
+    * 耗空间极小，每个hyperloglogkey占用了12K的内存用于标记基数
+    * pfadd命令不是一次性分配12K内存使用，会随着基数的增加内存逐渐增大
+    * Pfmerge命令合并后占用的存储空间为12K，无论合并之前数据量多少
+
+  * redis应用于独立信息统计
+
+* GEO
+
+  * redis应用于地理位置计算
+
+  * 基本操作
+
+    * 添加坐标点
+
+      geoaddkey longitude latitude member [longitude latitude member ...]
+
+    * 获取坐标点
+
+      geoposkey member [member ...]
+
+    * 计算坐标点距离
+  
+      geodistkey member1 member2 [unit]
+      
+    * 添加坐标点
+    
+      georadiuskey longitude latitude radius m|km|ft|mi [withcoord] [withdist] [withhash] [count count]
+    
+    * 获取坐标点
+    
+      georadiusbymemberkey member radius m|km|ft|mi [withcoord] [withdist] [withhash] [count count]
+    
+    * 计算经纬度
+    
+      geohashkey member [member ...]
