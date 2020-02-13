@@ -1,6 +1,4 @@
-
-
-# Nosql
+Nosql
 
 > NoSQL：即Not-Only SQL（泛指非关系型的数据库），作为关系型数据库的补充。
 >
@@ -879,7 +877,7 @@
 
 * 简介
 
-  redis事务就是一个命令执行的队列，将一系列预定义命令包装成一个整体（一个队列）。当执行时，一次性按照添加顺序依次执行，中间不会被打断或者干扰。
+  redis事务就是一个命令执行的队列，将一系列预定义命令包装成一个整体（一个队列）。当执行时，一次性按照添加顺序依次执行，中间不会被打断或者干扰
 
   一个队列中，一次性、顺序性、排他性的执行一系列命令
 
@@ -1240,3 +1238,713 @@
     * 计算经纬度
     
       geohashkey member [member ...]
+
+## Redis集群
+
+### 主从复制
+
+* 简介
+
+  * 多台服务器连接
+
+    * 提供数据方：master主服务器，主节点，主库主客户端
+    * 接收数据方：slave从服务器，从节点，从库从客户端
+    * 需要解决的问题：数据同步
+    * 核心工作：master的数据复制到slave中
+
+  * 概念
+
+    * 主从复制即将master中的数据即时、有效的复制到slave中
+
+  * 特征：一个master可以拥有多个slave，一个slave只对应一个master
+
+  * 职责：
+
+    * master：
+
+      写数据；执行写操作时，将出现变化的数据自动同步到slave；读数据（可忽略）；
+
+    * slave:
+
+      读数据;写数据（禁止）
+
+  * 作用
+
+    * 读写分离：master写、slave读，提高服务器的读写负载能力
+    * 负载均衡：基于主从结构，配合读写分离，由slave分担master负载，并根据需求的变化，改变slave的数量，通过多个从节点分担数据读取负载，大大提高Redis服务器并发量与数据吞吐量
+    * 故障恢复：当master出现问题时，由slave提供服务，实现快速的故障恢复
+    * 数据冗余：实现数据热备份，是持久化之外的一种数据冗余方式
+    * 高可用基石：基于主从复制，构建哨兵模式与集群，实现Redis的高可用方案
+
+* 工作流程
+
+  1. 建立连接阶段
+
+     1. 建立slave到master的连接，使master能够识别slave，并保存slave端口号
+        * 设置master的地址和端口，保存master信息
+        * 建立socket连接
+        * 发送ping命令（定时器任务）
+        * 身份验证
+        * 发送slave端口信息至此，主从连接成功！
+
+     <img src="..\笔记图片\建立连接阶段工作流程.png" alt="建立连接阶段工作流程" style="zoom: 50%;" />
+
+     2. 状态：
+        * slave：保存master的地址与端口
+        * master：保存slave的端口
+        * 总体：之间创建了连接的socket
+
+     3. 主从连接
+
+        * 方式一：客户端发送命令
+
+          slaveof <masterip> <masterport>
+
+        * 方式二：启动服务器参数
+
+          redis-server -slaveof <masterip> <masterport>
+
+        * 方式三：服务器配置
+
+          slaveof <masterip> <masterport>
+
+        * slave系统信息
+
+          master_link_down_since_seconds
+
+          masterhost
+
+          masterport
+
+        * master系统信息
+
+          slave_listening_port(多个)
+
+     4. 主从断开连接
+        * 客户端发送命令slaveof no one
+        * 说明：slave断开连接后，不会删除已有数据，只是不再接受master发送的数据
+
+     5. 授权访问
+
+        * master客户端发送命令设置密码
+
+          requirepass <password>
+
+        * master配置文件设置密码
+
+          config set requirepass <password>
+
+          config get requirepass 
+
+        * slave客户端发送命令设置密码
+
+          redis-server–a <password>
+
+        * slave配置文件设置密码
+
+          masterauth <password>
+
+        * slave启动服务器设置密码
+
+          auth <password>
+
+  2. 数据同步阶段工作流程
+
+     在slave初次连接master后，复制master中的所有数据到slave；将slave的数据库状态更新成master当前的数据库状态
+
+     <img src="..\笔记图片\数据同步阶段工作流程.png" alt="数据同步阶段工作流程" style="zoom: 50%;" />
+
+     * 请求同步数据
+     * 创建RDB同步数据
+     * 恢复RDB同步数据
+     * 请求部分同步数据
+     * 恢复部分同步数据
+
+     状态：
+
+     * slave：具有master端全部数据，包含RDB过程接收的数据
+     * master：保存slave当前数据同步的位置
+     * 总体：之间完成了数据克隆
+
+     说明
+
+     * master
+
+       1. 如果master数据量巨大，数据同步阶段应避开流量高峰期，避免造成master阻塞，影响业务正常执行
+
+       2. 复制缓冲区大小设定不合理，会导致数据溢出。如进行全量复制周期太长，进行部分复制时发现数据已经存在丢失的情况，必须进行第二次全量复制，致使slave陷入死循环状态。
+
+          默认 repl-backlog-size 1mb
+
+       3. master单机内存占用主机内存的比例不应过大，建议使用50%-70%的内存，留下30%-50%的内存用于执行bgsave命令和创建复制缓冲区
+
+     * slave
+
+       1. 为避免slave进行全量复制、部分复制时服务器响应阻塞或数据不同步，建议关闭此期间的对外服务
+
+          slave-serve-stale-data yes|no
+
+       2. 数据同步阶段，master发送给slave信息可以理解master是slave的一个客户端，主动向slave发送命令
+
+       3. 多个slave同时对master请求数据同步，master发送的RDB文件增多，会对带宽造成巨大冲击，如果master带宽不足，因此数据同步需要根据业务需求，适量错峰
+
+       4. slave过多时，建议调整拓扑结构，由一主多从结构变为树状结构，中间的节点既是master，也是slave。注意使用树状结构时，由于层级深度，导致深度越高的slave与最顶层master间数据同步延迟较大，数据一致性变差，应谨慎选择
+
+  3. 命令传播阶段
+
+     当master数据库状态被修改后，导致主从服务器数据库状态不一致，此时需要让主从数据同步到一致的状态，同步的动作称为命令传播
+
+     master将接收到的数据变更命令发送给slave，slave接收命令后执行命令
+
+     <img src="..\笔记图片\命令传播阶段工作流程.png" alt="命令传播阶段工作流程" style="zoom: 50%;" />
+
+     命令传播阶段出现了断网现象
+
+     * 网络闪断闪连 忽略
+     * 短时间网络中断 部分复制
+     * 长时间网络中断 全量复制
+
+     部分复制的三个核心要素
+
+     * 服务器的运行id（run id）
+
+       概念：服务器运行ID是每一台服务器每次运行的身份识别码，一台服务器多次运行可以生成多个运行id
+
+       组成：运行id由40位字符组成，是一个随机的十六进制字符例如：fdc9ff13b9bbaab28db42b3d50f852bb5e3fcdce
+
+       作用：运行id被用于在服务器间进行传输，识别身份如果想两次操作均对同一台服务器进行，必须每次操作携带对应的运行id，用于对方识别
+
+       实现方式：运行id在每台服务器启动时自动生成的，master在首次连接slave时，会将自己的运行ID发送给slave，slave保存此ID，通过info Server命令，可以查看节点的runid
+
+     * 主服务器的复制积压缓冲区
+
+       概念：复制缓冲区，又名复制积压缓冲区，是一个先进先出（FIFO）的队列，用于存储服务器执行过的命令，每次传播命令，master都会将传播的命令记录下来，并存储在复制缓冲区
+
+       * 复制缓冲区默认数据存储空间大小是1M，由于存储空间大小是固定的，当入队元素的数量大于队列长度时，最先入队的元素会被弹出，而新元素会被放入队列
+
+       由来：每台服务器启动时，如果开启有AOF或被连接成为master节点，即创建复制缓冲区
+
+       作用：用于保存master收到的所有指令（仅影响数据变更的指令，例如set，select）
+
+       数据来源：当master接收到主客户端的指令时，除了将指令执行，会将该指令存储到缓冲区中
+
+       原理：通过offset区分不同的slave当前数据传播的差异；master记录已发送的信息对应的offset；slave记录已接收的信息对应的offset
+
+     * 主从服务器的复制偏移量
+
+       概念：一个数字，描述复制缓冲区中的指令字节位置
+
+       分类：
+
+       * master复制偏移量：记录发送给所有slave的指令字节对应的位置（多个）
+       * slave复制偏移量：记录slave接收master发送过来的指令字节对应的位置（一个）
+
+       数据来源：
+
+       * master端：发送一次记录一次
+       * slave端：接收一次记录一次
+
+       作用：同步信息，比对master与slave的差异，当slave断线后，恢复数据使用
+
+  4. 心跳机制
+
+     * 进入命令传播阶段候，master与slave间需要进行信息交换，使用心跳机制进行维护，实现双方连接保持在线
+
+       master心跳：
+
+       * 指令：PING
+       * 周期：由repl-ping-slave-period决定，默认10秒
+       * 作用：判断slave是否在线
+       * 查询：INFO replication获取slave最后一次连接时间间隔，lag项维持在0或1视为正常
+
+       slave心跳任务
+
+       * 指令：REPLCONF ACK {offset}
+       * 周期：1秒
+       * 作用1：汇报slave自己的复制偏移量，获取最新的数据变更指令
+       * 作用2：判断master是否在线
+
+     * 注意事项
+
+       当slave多数掉线，或延迟过高时，master为保障数据稳定性，将拒绝所有信息同步操作
+
+       * min-slaves-to-write 2	
+
+       * min-slaves-max-lag 8
+
+         slave数量少于2个，或者所有slave的延迟都大于等于10秒时，强制关闭master写功能，停止数据同步
+
+       slave数量及延迟由slave发送REPLCONF ACK命令做确认
+
+* 常见问题
+
+  * 伴随着系统的运行，master的数据量会越来越大，一旦master重启，runid将发生变化，会导致全部slave的全量复制操作内部优化调整方案：
+
+    1. master内部创建master_replid变量，使用runid相同的策略生成，长度41位，并发送给所有slave
+    2. 在master关闭时执行命令shutdown save，进行RDB持久化,将runid与offset保存到RDB文件中
+       * repl-id repl-offset
+       * 通过redis-check-rdb命令可以查看该信息
+    3. master重启后加载RDB文件，恢复数据重启后，将RDB文件中保存的repl-id与repl-offset加载到内存中
+       * master_repl_id= repl master_repl_offset= repl-offset
+       * 通过info命令可以查看该信息作用：本机保存上次runid，重启后恢复该值，使所有slave认为还是之前的master
+
+  * 网络环境不佳，出现网络中断，slave不提供服务
+
+    * 问题原因
+
+      复制缓冲区过小，断网后slave的offset越界，触发全量复制
+
+    * 最终结果
+
+      slave反复进行全量复制
+
+    * 解决方案
+
+      修改复制缓冲区大小
+
+    * 建议设置如下：
+
+      1. 测算从master到slave的重连平均时长second
+      2. 获取master平均每秒产生写命令数据总量write_size_per_second
+      3. 最优复制缓冲区空间= 2 * second * write_size_per_secondrepl-backlog-size
+
+  * master的CPU占用过高或slave频繁断开连接
+
+    * 问题原因
+
+      * slave每1秒发送REPLCONF ACK命令到master
+      * 当slave接到了慢查询时（keys * ，hgetall等），会大量占用CPU性能
+      * master每1秒调用复制定时函数replicationCron()，比对slave发现长时间没有进行响应
+
+    * 最终结果
+
+      master各种资源（输出缓冲区、带宽、连接等）被严重占用
+
+    * 解决方案
+
+      通过设置合理的超时时间，确认是否释放
+
+      slave slaverepl-timeout 该参数定义了超时时间的阈值（默认60秒），超过该值，释放 
+
+  * slave与master连接断开
+
+    * 问题原因
+
+      * master发送ping指令频度较低
+      * master设定超时时间较短
+      * ping指令在网络中存在丢包
+
+    * 解决方案
+
+      提高ping指令发送的频度
+
+      repl-ping-slave-period超时时间repl-time的时间至少是ping指令频度的5到10倍，否则slave很容易判定超时
+
+  * 多个slave获取相同数据不同步
+
+    * 问题原因
+
+      网络信息不同步，数据发送有延迟
+
+    * 解决方案
+
+      * 优化主从间的网络环境，通常放置在同一个机房部署，如使用阿里云等云服务器时要注意此现象
+      * 监控主从节点延迟（通过offset）判断，如果slave延迟过大，暂时屏蔽程序对该slave的数据访问slave-serve-stale-datayes|no 开启后仅响应info、slaveof等少数命令（慎用，除非对数据一致性要求很高）
+
+### 哨兵模式
+
+* 简介
+
+  * 概念
+
+    哨兵(sentinel) 是一个分布式系统，用于对主从结构中的每台服务器进行监控，当出现故障时通过投票机制选择新的master并将所有slave连接到新的master
+
+  * 作用
+
+    * 监控
+
+      不断的检查master和slave是否正常运行。master存活检测、master与slave运行情况检测
+
+    * 通知（提醒）
+
+      当被监控的服务器出现问题时，向其他（哨兵间，客户端）发送通知。
+
+    * 自动故障转移
+
+      断开master与slave连接，选取一个slave作为master，将其他slave连接到新的master，并告知客户端新的服务器地址
+
+    * 注意：哨兵也是一台redis服务器，只是不提供数据服务通常哨兵配置数量为单数
+
+  * 启用哨兵模式
+
+    * 配置一拖二的主从结构
+    * 配置三个哨兵（配置相同，端口不同）参看sentinel.conf
+    * 启动哨兵 redis-sentinel sentinel-端口号.conf
+
+  * 配置哨兵
+
+    <img src="..\笔记图片\配置哨兵.png" alt="配置哨兵" style="zoom: 50%;" />
+
+  * 哨兵在进行主从切换过程中经历三个阶段
+
+    <img src="..\笔记图片\监控阶段.png" alt="监控阶段" style="zoom: 40%;" />
+
+    * 监控
+
+      用于同步各个节点的状态信息
+
+      * 获取各个sentinel的状态（是否在线）
+
+      * 获取master的状态  
+
+        master属性：runid role
+
+        各个slave的详细信息
+
+      * 获取所有slave的状态（根据master中的slave信息）
+
+        slave属性：runid、role、master_host、master_port、offset、......
+
+    * 通知
+
+    <img src="..\笔记图片\通知阶段.png" alt="通知阶段" style="zoom: 40%;" />
+
+    * 故障转移
+
+      服务器列表中挑选备选master
+
+      * 在线的
+
+      * 响应快的
+
+      * 与原master断开时间短的
+
+      * 优先原则
+
+        优先级、offset、runid
+
+      发送指令（sentinel ）
+
+      * 向新的master发送slaveof no one
+      * 向其他slave发送slave of 新masterIP端口 
+
+    * 总结
+
+      1. 监控
+
+         同步信息
+
+      2. 通知
+
+         保持联通
+
+      3. 故障转移
+
+         发现问题
+
+         竞选负责人
+
+         优选新master
+
+         新master上任，其他slave切换master，原master作为slave故障回复后连接
+
+### 集群
+
+* 概念
+
+  集群就是使用网络将若干台计算机联通起来，并提供统一的管理方式，使其对外呈现单机的服务效果
+
+* 作用
+
+  * 分散单台服务器的访问压力，实现负载均衡
+  * 分散单台服务器的存储压力，实现可扩展性
+  * 降低单台服务器宕机带来的业务灾难
+
+* 数据存储设计
+
+  * 通过算法设计，计算出key应该保存的位置
+
+  * 将所有的存储空间计划切割成16384份，每台主机保存一部分
+
+    每份代表的是一个存储空间，不是一个key的保存空间
+
+  * 将key按照计算出的结果放到对应的存储空间
+
+* 集群内部通讯设计
+
+  * 各个数据库相互通信，保存各个库中槽的编号数据
+  * 一次命中，直接返回
+  * 一次未命中，告知具体位置
+
+* 搭建方式
+
+  * 原生安装（单条命令）
+    * 配置服务器（3主3从）
+    * 建立通信（Meet）
+    * 分槽（Slot）
+    * 搭建主从（master-slave）
+  * 工具安装（批处理）
+
+* Cluster配置
+
+  * 添加节点
+
+    cluster-enabled yes|no
+
+  * cluster配置文件名，该文件属于自动生成，仅用于快速查找文件并查询文件内容
+
+    cluster-config-file <filename>
+
+  * 节点服务响应超时时间，用于判定该节点是否下线或切换为从节点
+
+    cluster-migration-barrier <count>
+
+  * master连接的slave最小数量
+
+    cluster-node-timeout <milliseconds>
+
+* Cluster节点操作命令
+
+  * 查看集群节点信息
+
+    cluster nodes
+
+  * 进入一个从节点redis，切换其主节点
+
+    cluster replicate <master-id>
+
+  * 发现一个新节点，新增主节点
+
+    cluster meet ip:port
+
+  * 忽略一个没有solt的节点
+
+    cluster forget <id>
+
+  * 手动故障转移
+
+    cluster failover
+
+* redis-trib命令
+
+  * 添加节点
+
+    redis-trib.rb add-node
+
+  * 删除节点
+
+    redis-trib.rb del-node
+
+  * 重新分片
+
+    redis-trib.rb reshard
+
+## 企业级解决方案
+
+### 缓存预热
+
+* 宕机
+
+  * 请求数量较高
+  * 主从之间数据吞吐量较大，数据同步操作频度较高
+
+* 解决方案
+
+  * 前置准备工作：
+    1. 日常例行统计数据访问记录，统计访问频度较高的热点数据
+    2. 利用LRU数据删除策略，构建数据留存队列例如：storm与kafka配合
+  * 准备工作：
+    1. 将统计结果中的数据分类，根据级别，redis优先加载级别较高的热点数据
+    2. 利用分布式多服务器同时进行数据读取，提速数据加载过程
+    3. 热点数据主从同时
+  * 预热实施：
+    1. 使用脚本程序固定触发数据预热过程
+    2. 如果条件允许，使用了CDN（内容分发网络），效果会更好
+
+* 总结
+
+  缓存预热就是系统启动前，提前将相关的缓存数据直接加载到缓存系统。避免在用户请求的时候，先查询数据库，然后再将数据缓存的问题！用户直接查询事先被预热的缓存数据
+
+### 缓存雪崩
+
+* 数据库服务器崩溃
+  1. 系统平稳运行过程中，忽然数据库连接量激增
+  2. 应用服务器无法及时处理请求
+  3. 大量408，500错误页面出现
+  4. 客户反复刷新页面获取数据
+  5. 数据库崩溃
+  6. 应用服务器崩溃
+  7. 重启应用服务器无效
+  8. Redis服务器崩溃
+  9. Redis集群崩溃
+  10. 重启数据库后再次被瞬间流量放倒
+* 问题排查
+  1. 在一个较短的时间内，缓存中较多的key集中过期
+  2. 此周期内请求访问过期的数据，redis未命中，redis向数据库获取数据
+  3. 数据库同时接收到大量的请求无法及时处理
+  4. Redis大量请求被积压，开始出现超时现象
+  5. 数据库流量激增，数据库崩溃
+  6. 重启后仍然面对缓存中无数据可用
+  7. Redis服务器资源被严重占用，Redis服务器崩溃
+  8. Redis集群呈现崩塌，集群瓦解
+  9. 应用服务器无法及时得到数据响应请求，来自客户端的请求数量越来越多，应用服务器崩溃
+  10. 应用服务器，redis，数据库全部重启，效果不理想
+* 分析
+  * 短时间范围内大量key集中过期
+* 解决方案思路
+  1. 更多的页面静态化处理
+  2. 构建多级缓存架构Nginx缓存+redis缓存+ehcache缓存
+  3. 检测Mysql严重耗时业务进行优化对数据库的瓶颈排查：例如超时查询、耗时较高事务等
+  4. 灾难预警机制监控redis服务器性能指标
+     * CPU占用、CPU使用率
+     * 内存容量
+     * 查询平均响应时间
+     * 线程数
+  5. 限流、降级短时间范围内牺牲一些客户体验，限制一部分请求访问，降低应用服务器压力，待业务低速运转后再逐步放开访问
+* 解决方式
+  1. LRU与LFU切换
+  2. 数据有效期策略调整
+     * 根据业务数据有效期进行分类错峰，A类90分钟，B类80分钟，C类70分钟
+     * 过期时间使用固定时间+随机值的形式，稀释集中到期的key的数量
+  3. 超热数据使用永久key
+  4. 定期维护（自动+人工）对即将过期数据做访问量分析，确认是否延时，配合访问量统计，做热点数据的延时
+  5. 加锁慎用！
+
+### 缓存击穿
+
+* 数据库服务器崩溃
+  1. 系统平稳运行过程中
+  2. 数据库连接量瞬间激增
+  3. Redis服务器无大量key过期
+  4. Redis内存平稳，无波动
+  5. Redis服务器CPU正常
+  6. 数据库崩溃
+* 问题排查
+  1. Redis中某个key过期，该key访问量巨大
+  2. 多个数据请求从服务器直接压到Redis后，均未命中
+  3. Redis在短时间内发起了大量对数据库中同一数据的访问
+* 分析
+  * 单个高热数据key过期
+* 解决方案
+  1. 预先设定以电商为例，每个商家根据店铺等级，指定若干款主打商品，在购物节期间，加大此类信息key的过期时长注意：购物节不仅仅指当天，以及后续若干天，访问峰值呈现逐渐降低的趋势
+  2. 现场调整监控访问量，对自然流量激增的数据延长过期时间或设置为永久性key
+  3. 后台刷新数据启动定时任务，高峰期来临之前，刷新数据有效期，确保不丢失
+  4. 二级缓存设置不同的失效时间，保障不会被同时淘汰就行
+  5. 加锁分布式锁，防止被击穿，但是要注意也是性能瓶颈，慎重！
+
+* 总结
+
+  缓存击穿就是单个高热数据过期的瞬间，数据访问量较大，未命中redis后，发起了大量对同一数据的数据库访问，导致对数据库服务器造成压力。应对策略应该在业务数据分析与预防方面进行，配合运行监控测试与即时调整策略，毕竟单个key的过期监控难度较高，配合雪崩处理策略即可
+
+### 缓存穿透
+
+* 现象
+
+  1. 系统平稳运行过程中
+  2. 应用服务器流量随时间增量较大
+  3. Redis服务器命中率随时间逐步降低
+  4. Redis内存平稳，内存无压力
+  5. Redis服务器CPU占用激增
+  6. 数据库服务器压力激增
+  7. 数据库崩溃
+
+* 问题排查
+
+  1. Redis中大面积出现未命中
+  2. 出现非正常URL访问
+
+* 分析
+
+  * 获取的数据在数据库中也不存在，数据库查询未得到对应数据
+  * Redis获取到null数据未进行持久化，直接返回
+  * 下次此类数据到达重复上述过程
+  * 出现黑客攻击服务器
+
+* 解决方案
+
+  1. 缓存null对查询结果为null的数据进行缓存（长期使用，定期清理），设定短时限，例如30-60秒，最高5分钟
+  2. 白名单策略
+     * 提前预热各种分类数据id对应的bitmaps，id作为bitmaps的offset，相当于设置了数据白名单。当加载正常数据时，放行，加载异常数据时直接拦截（效率偏低）
+     * 使用布隆过滤器（有关布隆过滤器的命中问题对当前状况可以忽略）
+  3. 实施监控实时监控redis命中率（业务正常范围时，通常会有一个波动值）与null数据的占比
+     * 非活动时段波动：通常检测3-5倍，超过5倍纳入重点排查对象
+     * 活动时段波动：通常检测10-50倍，超过50倍纳入重点排查对象根据倍数不同，启动不同的排查流程。然后使用黑名单进行防控（运营）
+  4. key加密问题出现后，临时启动防灾业务key，对key进行业务层传输加密服务，设定校验程序，过来的key校验例如每天随机分配60个加密串，挑选2到3个，混淆到页面数据id中，发现访问key不满足规则，驳回数据访问
+
+* 总结
+
+  缓存击穿访问了不存在的数据，跳过了合法数据的redis数据缓存阶段，每次访问数据库，导致对数据库服务器造成压力。通常此类数据的出现量是一个较低的值，当出现此类情况以毒攻毒，并及时报警。应对策略应该在临时预案防范方面多做文章。无论是黑名单还是白名单，都是对整体系统的压力，警报解除后尽快移除。
+
+### 性能指标监控
+
+* 性能指标：Performance
+  * latency：Redis响应一个请求的时间
+  * instantaneous_ops_per_sec：平均每秒处理请求总数
+  * hit rate(calculated)：缓存命中率
+* 内存指标：Memory
+  * used_memory：Redis分配器分配的内存量，也就是实际存储数据的内存总量
+  * mem_fragmentation_ratio：used_memory_rss /used_memory比值，表示内存碎片率
+  * evicted_keys：由于maxmemory限制，而被回收内存的key的总数
+  * blocked_clients：由于阻塞调用(BLPOP、BRPOP、BRPOPLPUSH)而等待的客户端的数量
+* 基本活动指标：Basic activity
+  * connected_clients：客户端连接数
+  * connected_slaves：Slave数量
+  * master_last_io_seconds_ago：最近一次主从交互之后的秒数
+  * keyspace：数据库中的key值总数
+* 持久性指标：Persistence
+  * rdb_last_save_time：最后一次持久化保存到磁盘的Unix时间戳
+  * rdb_changes_since_last_save：自最后一次持久化以来数据库的更改数
+* 错误指标：Error
+  * rejected_connections：由于maxclients限制而拒绝的连接数量
+  * keyspace_misses：keyspace未命中次数
+  * master_link_down_since_seconds：主从断开的持续时间
+
+### 监控方式
+
+* 工具
+
+  * Cloud Insight Redis
+  * Prometheus
+  * Redis-stat
+  * Redis-faina
+  * RedisLive
+  * zabbix
+
+* 命令
+
+  * benchmark
+  * rediscli
+  * monitor
+  * slowlogs
+
+* benchmark
+
+  * 命令
+    * redis-benchmark [-h ] [-p ] [-c ] [-n <requests]> [-k ]
+  * 范例1
+    * redis-benchmark
+    * 说明：50个连接，10000次请求对应的性能
+  * 范例2
+    * redis-benchmark -c 100 -n 5000
+    * 说明：100个连接，5000次请求对应的性能
+
+  <img src="..\笔记图片\benchmark命令.png" alt="benchmark命令" style="zoom: 50%;" />
+
+* moniter
+
+  * 命令打印服务器调试信息
+
+* slowlog
+
+  * 命令
+
+    slowlog[operator]
+
+    * get ：获取慢查询日志
+    * len：获取慢查询日志条目数
+    * reset ：重置慢查询日志
+
+  * 相关配置
+
+    * slowlog-log-slower-than 1000 #设置慢查询的时间下线，单位：ms
+    * slowlog-max-len 100          #设置慢查询命令对应的日志显示长度，单位：命令数
