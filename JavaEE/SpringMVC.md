@@ -638,3 +638,250 @@ public String delSessionAttributes(SessionStatus status){
 
 ### SpringMVC实现文件上传
 
+#### 传统文件上传
+
+* 导入文件上传的jar包
+
+  ```xml
+  <dependency>
+      <groupId>commons-fileupload</groupId>
+      <artifactId>commons-fileupload</artifactId>
+      <version>1.3.1</version>
+      </dependency>
+      <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+  </dependency>
+  ```
+
+* 编写文件上传的JSP页面
+
+  ```jsp
+  <h3>文件上传</h3>
+  <form action="user/fileupload" method="post" enctype="multipart/form-data">
+      选择文件：<input type="file" name="upload"/><br/>
+  	<input type="submit" value="上传文件"/>
+  </form>
+  ```
+
+*  编写文件上传的Controller控制器
+
+#### SpringMVC方式文件上传
+
+* SpringMVC框架提供了MultipartFile对象，该对象表示上传的文件，要求变量名称必须和表单file标签的 name属性名称相同
+
+  * 配置文件解析器对象
+
+    ```xml
+    <!--配置文件解析器对象-->
+        <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+            <property name="maxUploadSize" value="10485760" />
+        </bean>
+    ```
+
+  * 实现
+
+    ```java
+    @RequestMapping("/fileupload2")
+    public String fileupload2(HttpServletRequest request, MultipartFile upload) throws Exception {
+        System.out.println("springmvc文件上传...");
+    
+        // 使用fileupload组件完成文件上传
+        // 上传的位置
+        String path = request.getSession().getServletContext().getRealPath("/uploads/");
+        // 判断，该路径是否存在
+        File file = new File(path);
+        if(!file.exists()){
+        // 创建该文件夹
+        file.mkdirs();
+        }
+    
+        // 说明上传文件项
+        // 获取上传文件的名称
+        String filename = upload.getOriginalFilename();
+        // 把文件的名称设置唯一值，uuid
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        filename = uuid+"_"+filename;
+        // 完成文件上传
+        upload.transferTo(new File(path,filename));
+    
+        return "success";
+    }
+    ```
+
+#### 跨服务器方式的文件上传
+
+* 分服务器的目的
+
+  * 在实际开发中，我们会有很多处理不同功能的服务器。
+
+    例如： 
+
+    * 应用服务器：负责部署我们的应用 
+    * 数据库服务器：运行我们的数据库 
+    * 缓存和消息服务器：负责处理大并发访问的缓存和消息 
+    * 文件服务器：负责存储用户上传文件的服务器。
+
+* 搭建图片服务器 
+
+* 编写控制器
+
+  ```java
+  @RequestMapping("/fileupload3")
+  public String fileupload3(MultipartFile upload) throws Exception {
+      System.out.println("跨服务器文件上传...");
+  
+      // 定义上传文件服务器路径
+      String path = "http://localhost:9090/uploads/";
+  
+      // 说明上传文件项
+      // 获取上传文件的名称
+      String filename = upload.getOriginalFilename();
+      // 把文件的名称设置唯一值，uuid
+      String uuid = UUID.randomUUID().toString().replace("-", "");
+      filename = uuid+"_"+filename;
+  
+      // 创建客户端的对象
+      Client client = Client.create();
+  
+      // 和图片服务器进行连接
+      WebResource webResource = client.resource(path + filename);
+  
+      // 上传文件
+      webResource.put(upload.getBytes());
+  
+      return "success";
+  }
+  ```
+
+### SpringMVC的异常处理
+
+* 异常处理思路
+
+  * 系统中异常包括两类：预期异常和运行时异常 RuntimeException，前者通过捕获异常从而获取异常信息， 后者主要通过规范代码开发、测试通过手段减少运行时异常的发生。
+  * 系统的 dao、service、controller 出现都通过 throws Exception 向上抛出，最后由 springmvc 前端 控制器交由异常处理器进行异常处理
+
+* 异常处理方式
+
+  *  自定义异常类
+
+    ```java
+    public class SysException extends Exception{
+        // 存储提示信息的
+        private String message;
+    
+        public String getMessage() {
+            return message;
+        }
+    
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    
+        public SysException(String message) {
+            this.message = message;
+        }
+    }
+    ```
+
+  *  自定义异常处理器
+
+    ```java
+    public class SysExceptionResolver implements HandlerExceptionResolver{
+        public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+            // 获取到异常对象
+            SysException e = null;
+            if(ex instanceof SysException){
+            e = (SysException)ex;
+            }else{
+            e = new SysException("系统正在维护....");
+            }
+            // 创建ModelAndView对象
+            ModelAndView mv = new ModelAndView();
+            mv.addObject("errorMsg",e.getMessage());
+            mv.setViewName("error");
+            return mv;
+    	}
+    }
+    ```
+
+  *  配置异常处理器
+
+    ```xml
+    <!--配置异常处理器-->
+        <bean id="sysExceptionResolver" class="cn.itcast.exception.SysExceptionResolver"/>
+    ```
+
+### SpringMVC拦截器
+
+#### 拦截器的作用
+
+* Spring MVC 的处理器拦截器类似于 Servlet 开发中的过滤器 Filter，用于对处理器进行预处理和后处理。 用户可以自己定义一些拦截器来实现特定的功能。 
+* 拦截器链就是将拦截器按一定的顺序联结成一条链。在访问被拦截的方法或字段时，拦截器链中的拦截器就会按其之前定义的顺序被调用。 
+* 区别： 
+  * 过滤器是 servlet 规范中的一部分，任何 java web 工程都可以使用。 
+  * 拦截器是 SpringMVC 框架自己的，只有使用了 SpringMVC 框架的工程才能用。 
+  * 过滤器在 url-pattern 中配置了/*之后，可以对所有要访问的资源拦截。 
+  * 拦截器它是只会拦截访问的控制器方法，如果访问的是 jsp，html,css,image 或者 js 是不会进行拦 截的。 
+* 它也是 AOP 思想的具体应用。 我们要想自定义拦截器， 要求必须实现：HandlerInterceptor 接口
+
+#### 自定义拦截器
+
+*  编写拦截器
+
+  ```java
+  public class MyInterceptor1 implements HandlerInterceptor{
+  	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+          System.out.println("MyInterceptor1执行了...前1111");
+          // request.getRequestDispatcher("/WEB-INF/pages/error.jsp").forward(request,response);
+          return true;
+      }
+  
+      public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+          System.out.println("MyInterceptor1执行了...后1111");
+          // request.getRequestDispatcher("/WEB-INF/pages/error.jsp").forward(request,response);
+      }
+  
+      public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+      	System.out.println("MyInterceptor1执行了...最后1111");
+      }
+  }
+  ```
+
+* 配置拦截器
+
+  ```xml
+  <!--配置拦截器-->
+  <mvc:interceptors>
+      <!--配置拦截器-->
+      <mvc:interceptor>
+          <!-- 用于指定拦截的 url -->
+          <mvc:mapping path="/user/*"/>
+          <!-- 用于指定排除的 url
+          <mvc:exclude-mapping path=""/>
+          -->
+          <!--配置拦截器对象-->
+          <bean class="cn.itcast.controller.cn.itcast.interceptor.MyInterceptor1" />
+      </mvc:interceptor>
+  </mvc:interceptors>
+  ```
+
+#### 拦截器的细节
+
+* preHandle方法是controller方法执行前拦截的方法
+
+  * 可以使用request或者response跳转到指定的页面
+  * return true放行，执行下一个拦截器，如果没有拦截器，执行controller中的方法。
+  * return false不放行，不会执行controller中的方法。
+
+* postHandle是controller方法执行后执行的方法，在JSP视图执行前。
+
+  * 可以使用request或者response跳转到指定的页面
+  * 如果指定了跳转的页面，那么controller方法跳转的页面将不会显示
+
+* postHandle方法是在JSP执行后执行
+
+  * request或者response不能再跳转页面了
+
+  
