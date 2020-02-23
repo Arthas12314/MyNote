@@ -96,9 +96,9 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
       2. 对象活着：只要对象在使用中，就一直活着。 
       3. 对象死亡：当对象长时间不用时，被 java 的垃圾回收器回收了。
 
-    * request：作用于web应用的请求范围
+    * request：作用于web应用的请求范围，同一次请求创建一个实例
 
-    * session：作用于web应用的会话范围
+    * session：作用于web应用的会话范围，同一个session创建一个实例
 
     * global-session：作用于集群环境的会话范围（全局会话范围），当不是集群环境时，它就是session
 
@@ -262,7 +262,7 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
        使用此注解就等同于在xml中配置了:
 
        ```xml
-       <context:component-scan base-package="com.itheima"></context:component-scan>
+       <context:component-scan base-package="com.itheima"/>
        ```
 
      * Bean
@@ -284,6 +284,74 @@ Spring体系结构	<img src="https://img-blog.csdnimg.cn/20191216224813110.png?x
        属性value：指定文件的名称和路径。
 
        关键字：classpath，表示类路径下
+     
+   * 给容器中注册组件
+
+     1. 包扫描+组件标注注解（@Controller/@Service/@Repository/@Component）[自己写的类]
+
+     2. @Bean[导入的第三方包里面的组件]
+
+     3. @Import[快速给容器中导入一个组件]
+
+        * @Import(要导入到容器中的组件)；容器中就会自动注册这个组件，id默认是全类名
+        * ImportSelector:返回需要导入的组件的全类名数组
+        * ImportBeanDefinitionRegistrar:手动注册bean到容器中
+
+     4. 使用Spring提供的 FactoryBean（工厂Bean
+
+        * 默认获取到的是工厂bean调用getObject创建的对象
+
+        * 要获取工厂Bean本身，我们需要给id前面加一个&
+
+          ​	&colorFactoryBean
+
+   * bean的生命周期
+
+     1. bean创建---初始化----销毁的过程
+
+     2. 容器管理bean的生命周期
+
+        我们可以自定义初始化和销毁方法，容器在bean进行到当前生命周期的时候来调用我们自定义的初始化和销毁方法
+
+        1. 构造（对象创建）
+
+           单实例：在容器启动的时候创建对象
+
+           多实例：在每次获取的时候创建对象
+
+        2. 销毁：
+
+           单实例：容器关闭的时候
+
+           多实例：容器不会管理这个bean；容器不会调用销毁方法；
+
+        3. 指定初始化和销毁方法
+
+           通过@Bean指定init-method和destroy-method
+
+        4. 通过让Bean实现
+
+           InitializingBean（定义初始化逻辑），DisposableBean（定义销毁逻辑）
+
+        5. 可以使用JSR250
+
+           @PostConstruct：在bean创建完成并且属性赋值完成，来执行初始化方法
+
+           @PreDestroy：在容器销毁bean之前通知我们进行清理工作
+
+     3. BeanPostProcessor原理
+
+        遍历得到容器中所有的BeanPostProcessor；挨个执行beforeInitialization，一但返回null，跳出for循环，不会执行后面的BeanPostProcessor.postProcessorsBeforeInitialization
+
+     4. BeanPostProcessor【interface】：bean的后置处理器；
+
+        * 在bean初始化前后进行一些处理工作；
+        * postProcessBeforeInitialization:在初始化之前工作
+        * postProcessAfterInitialization:在初始化之后工作
+
+     5. Spring底层对 BeanPostProcessor 的使用；
+
+         bean赋值，注入其他组件，@Autowired，生命周期注解功能，@Async,xxx BeanPostProcessor;
 
 4. Spring和Junit整合
 

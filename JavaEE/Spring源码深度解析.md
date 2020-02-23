@@ -1,6 +1,6 @@
-### Spring源码深度解析
+## Spring源码深度解析
 
-##### 1.Spring整体架构和环境搭建
+### 1.Spring整体架构和环境搭建
 
 * Spring整体架构
 
@@ -45,7 +45,7 @@
 
     JUnit及TestNG
 
-##### 2.容器的基本实现
+### 2.容器的基本实现
 
 * Spring结构组成
 
@@ -66,7 +66,7 @@
 
 * 解析及注册BeanDefinitions
 
-##### 3.默认标签的解析
+### 3.默认标签的解析
 
 * 对bean标签的解析及注册
   * 解析BeanDefinition

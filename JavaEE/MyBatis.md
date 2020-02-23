@@ -1,6 +1,6 @@
-# MyBatis
+## MyBatis
 
-## 1.概述
+### 1.概述
 
 * mybatis 是一个优秀的基于 java 的持久层框架，它内部封装了 jdbc，使开发者只需要关注 sql 语句本身， 而不需要花费精力去处理加载驱动、创建连接、创建 statement 等繁杂的过程。 
 
@@ -12,7 +12,7 @@
 
   即把数据库表和实体类即实体类的属性对应起来，让我们可以操作实体类实现操作数据库表
 
-## 2.入门
+### 2.入门
 
 * 环境搭建
 
@@ -59,60 +59,60 @@
     * 映射配置文件的操作配置(select)，id属性的取值必须是dao类接口。
     * 当我们遵从了以上注意项之后，我们在开发中就无需再写dao的实现类。
 
-* 入门案例
+#### 入门案例
 
-  ```java
-  //1.读取配置文件
-  InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
-  //2.创建SqlSessionFactory工厂
-  SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-  SqlSessionFactory factory = builder.build(in);
-  //3.使用工厂生产SqlSession对象
-  SqlSession session = factory.openSession();
-  //4.使用SqlSession创建Dao接口的代理对象
-  IUserDao userDao = session.getMapper(IUserDao.class);
-  //5.使用代理对象执行方法
-  List<User> users = userDao.findAll();
-  for(User user : users){
-  System.out.println(user);
-  }
-  //6.释放资源
-  session.close();
-  in.close();
-  ```
+```java
+//1.读取配置文件
+InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
+//2.创建SqlSessionFactory工厂
+SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
+SqlSessionFactory factory = builder.build(in);
+//3.使用工厂生产SqlSession对象
+SqlSession session = factory.openSession();
+//4.使用SqlSession创建Dao接口的代理对象
+IUserDao userDao = session.getMapper(IUserDao.class);
+//5.使用代理对象执行方法
+List<User> users = userDao.findAll();
+for(User user : users){
+System.out.println(user);
+}
+//6.释放资源
+session.close();
+in.close();
+```
 
-  注意事项：
+注意事项：
 
-  不要忘记在映射配置中告知Mybatis要封装到哪个实体类中，配置的方式:指定实体类的全限定类名
+不要忘记在映射配置中告知Mybatis要封装到哪个实体类中，配置的方式:指定实体类的全限定类名
 
 * Mybatis基于注解的入门案例：
 
   * 把IUserDao移除，在dao接口的方法上使用@Select注解，并且指定SQL语句，同时需要在SqlMapConfig.xml的Mapper配置时，使用class属性指定dao接口的全限定类名
   * 实际开发中一般不写dao实现类（无论是xml还是注解，而Mybatis也支持写dao实现类
 
-* 自定义Mybatis的设计模式
+#### 自定义Mybatis的设计模式
 
-  ```java
-  //1.读取配置文件
-  InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
-  //2.创建SqlSessionFactory工厂
-  SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-  SqlSessionFactory factory = builder.build(in);
-  //3.使用工厂生产SqlSession对象
-  SqlSession session = factory.openSession();
-  //4.使用SqlSession创建Dao接口的代理对象
-  IUserDao userDao = session.getMapper(IUserDao.class);
-  //5.使用代理对象执行方法
-  List<User> users = userDao.findAll();
-  ```
+```java
+//1.读取配置文件
+InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
+//2.创建SqlSessionFactory工厂
+SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
+SqlSessionFactory factory = builder.build(in);
+//3.使用工厂生产SqlSession对象
+SqlSession session = factory.openSession();
+//4.使用SqlSession创建Dao接口的代理对象
+IUserDao userDao = session.getMapper(IUserDao.class);
+//5.使用代理对象执行方法
+List<User> users = userDao.findAll();
+```
 
-  * 工厂模式
+* 工厂模式
 
-  * 构造者模式
+* 构造者模式
 
-    在创建工厂时使用SqlSessionFactoryBuilder进行构建
+  在创建工厂时使用SqlSessionFactoryBuilder进行构建
 
-  * 代理模式
+* 代理模式
 
 * 自定义Mybatis的分析
 
@@ -167,33 +167,33 @@
     }
     ```
 
-## 3.MyBatisCRUD
+### 3.MyBatisCRUD
 
-* M'y'Batis自定义流程
+#### MyBatis自定义流程
 
-  * SqlSessionFactoryBuilder接收SqlMapConfig.xml文件流，构建出SqlSessionFactory对象
+* SqlSessionFactoryBuilder接收SqlMapConfig.xml文件流，构建出SqlSessionFactory对象
 
-  * SqlSessionFactory读取SqlMapConfig.xml中连接数据库信息和mapper映射信息，用来生产出真正操作数据库的SqlSession对象
+* SqlSessionFactory读取SqlMapConfig.xml中连接数据库信息和mapper映射信息，用来生产出真正操作数据库的SqlSession对象
 
-  * SqlSession作用  无论哪个分支，除了获取数据库信息，还需要得到sql语句
+* SqlSession作用  无论哪个分支，除了获取数据库信息，还需要得到sql语句
 
-    * 生成代理接口  
+  * 生成代理接口  
 
-      SqlSessionImpl对象的getMapper方法分两步来实现
+    SqlSessionImpl对象的getMapper方法分两步来实现
 
-      1. 先用SqlSessionFactory读取的数据库连接信息建立Connection对象
-      2. 通过jdk代理模式创建出代理对象作为getMapper的方法返回值，这里主要是在创建代理对象时第三个参数处理类里面得到sql语句执行对应的CRUD操作
+    1. 先用SqlSessionFactory读取的数据库连接信息建立Connection对象
+    2. 通过jdk代理模式创建出代理对象作为getMapper的方法返回值，这里主要是在创建代理对象时第三个参数处理类里面得到sql语句执行对应的CRUD操作
 
-    * 定义通用CRUD方法
+  * 定义通用CRUD方法
 
-      SqlSessionImpl对象中提供selectList()方法
+    SqlSessionImpl对象中提供selectList()方法
 
-      1. 用SqlSessionFactory读取的数据库连接信息创建出jdbc的Connection对象
-      2. 直接得到sql语句，使用jdbc的Connection对象进行对应的CRUD操作
+    1. 用SqlSessionFactory读取的数据库连接信息创建出jdbc的Connection对象
+    2. 直接得到sql语句，使用jdbc的Connection对象进行对应的CRUD操作
 
-  * 封装结果集
+* 封装结果集
 
-    将结果封装为java对象返回调用者，因此需要获取返回的结果类型
+  将结果封装为java对象返回调用者，因此需要获取返回的结果类型
 
 * CRUD
 
@@ -366,65 +366,65 @@
   </configuration>
   ```
 
-* mybatis中的连接池
+#### mybatis中的连接池
 
-  可以减少我们获取连接所消耗的时间
+可以减少我们获取连接所消耗的时间
 
-  mybatis连接池提供了3种方式的配置：
+mybatis连接池提供了3种方式的配置：
 
-  * 配置的位置：
-    主配置文件SqlMapConfig.xml中的dataSource标签，type属性就是表示采用何种连接池方式。
+* 配置的位置：
+  主配置文件SqlMapConfig.xml中的dataSource标签，type属性就是表示采用何种连接池方式。
 
-  * type属性的取值：
+* type属性的取值：
 
-    * POOLED
+  * POOLED
 
-      采用传统的javax.sql.DataSource规范中的连接池，mybatis中有针对规范的实现
+    采用传统的javax.sql.DataSource规范中的连接池，mybatis中有针对规范的实现
 
-    * UNPOOLED
+  * UNPOOLED
 
-      采用传统的获取连接的方式，虽然也实现Javax.sql.DataSource接口，但是并没有使用池的思想。
+    采用传统的获取连接的方式，虽然也实现Javax.sql.DataSource接口，但是并没有使用池的思想。
 
-    * JNDI
+  * JNDI
 
-      采用服务器提供的JNDI技术实现，来获取DataSource对象，不同的服务器所能拿到DataSource是不一样。注意：如果不是web或者maven的war工程，是不能使用的。
+    采用服务器提供的JNDI技术实现，来获取DataSource对象，不同的服务器所能拿到DataSource是不一样。注意：如果不是web或者maven的war工程，是不能使用的。
 
-* 动态sql
+#### 动态sql
 
-  * \<if\>
+* \<if\>
 
-  * \<where\>
+* \<where\>
 
-    ```xml
-    <select id="findUserByCondition" resultMap="userMap" parameterType="user">
-            select * from user
-            <where>
-                <if test="userName != null">
-                    and username = #{userName}
-                </if>
-                <if test="userSex != null">
-                    and sex = #{userSex}
-                </if>
-            </where>
-        </select>
-    ```
+  ```xml
+  <select id="findUserByCondition" resultMap="userMap" parameterType="user">
+          select * from user
+          <where>
+              <if test="userName != null">
+                  and username = #{userName}
+              </if>
+              <if test="userSex != null">
+                  and sex = #{userSex}
+              </if>
+          </where>
+      </select>
+  ```
 
-  * \<foreach\>
+* \<foreach\>
 
-    ```xaml
-    <!-- 根据queryvo中的Id集合实现查询用户列表 -->
-        <select id="findUserInIds" resultMap="userMap" parameterType="queryvo">
-            <include refid="defaultUser"/>
-            <where>
-                <if test="ids != null and ids.size()>0">
-                    <foreach collection="ids" open="and id in (" close=")" item="uid" separator=",">
-                        #{uid}
-                    </foreach>
-                </if>
-            </where>
-        </select>
-    ```
-
+  ```xaml
+  <!-- 根据queryvo中的Id集合实现查询用户列表 -->
+      <select id="findUserInIds" resultMap="userMap" parameterType="queryvo">
+          <include refid="defaultUser"/>
+          <where>
+              <if test="ids != null and ids.size()>0">
+                  <foreach collection="ids" open="and id in (" close=")" item="uid" separator=",">
+                      #{uid}
+                  </foreach>
+              </if>
+          </where>
+      </select>
+  ```
+  
 * 多表查询
 
   * 一对一查询（多对一
@@ -544,123 +544,132 @@
         </select>
     ```
 
-* Mybatis缓存
+#### Mybatis缓存
 
-  * 缓存是存在于内存中的临时数据。
-    减少和数据库的交互次数，提高执行效率。
+* 缓存是存在于内存中的临时数据。
+  减少和数据库的交互次数，提高执行效率。
 
-    * 适用于缓存：
-      经常查询并且不经常改变的。
-      数据的正确与否对最终结果影响不大的。
-    * 不适用于缓存：
-      经常改变的数据
-      数据的正确与否对最终结果影响很大的。例如：商品的库存，银行的汇率，股市的牌价。
+  * 适用于缓存：
+    经常查询并且不经常改变的。
+    数据的正确与否对最终结果影响不大的。
+  * 不适用于缓存：
+    经常改变的数据
+    数据的正确与否对最终结果影响很大的。例如：商品的库存，银行的汇率，股市的牌价。
 
-  * Mybatis中的一级缓存和二级缓存
+* Mybatis中的一级缓存和二级缓存
 
-    * 一级缓存：
-      Mybatis中SqlSession对象的缓存。
-      当我们执行查询之后，查询的结果会同时存入到SqlSession为我们提供一块区域中。
-      该区域的结构是一个Map。当我们再次查询同样的数据，mybatis会先去sqlsession中
-      查询是否有，有的话直接拿出来用。
-      当SqlSession对象消失时，mybatis的一级缓存也就消失了。
+  * 一级缓存：
+    Mybatis中SqlSession对象的缓存。
+    当我们执行查询之后，查询的结果会同时存入到SqlSession为我们提供一块区域中。
+    该区域的结构是一个Map。当我们再次查询同样的数据，mybatis会先去sqlsession中
+    查询是否有，有的话直接拿出来用。
+    当SqlSession对象消失时，mybatis的一级缓存也就消失了。
 
-    * 二级缓存:
-      Mybatis中SqlSessionFactory对象的缓存。由同一个SqlSessionFactory对象创建的SqlSession共享其缓存。
-      二级缓存的使用步骤：
+  * 二级缓存:
+    Mybatis中SqlSessionFactory对象的缓存。由同一个SqlSessionFactory对象创建的SqlSession共享其缓存。
+    二级缓存的使用步骤：
 
-      1. 让Mybatis框架支持二级缓存（在SqlMapConfig.xml中配置）
+    1. 让Mybatis框架支持二级缓存（在SqlMapConfig.xml中配置）
 
-         ```xml
-         <settings>
-         	<setting name="cacheEnabled" value="true"/>
-         </settings>
-         ```
+       ```xml
+       <settings>
+       	<setting name="cacheEnabled" value="true"/>
+       </settings>
+       ```
 
-      2. 让当前的映射文件支持二级缓存（在IUserDao.xml中配置）
+    2. 让当前的映射文件支持二级缓存（在IUserDao.xml中配置）
 
-         ```xml
-         <!--开启user支持二级缓存-->
-         <cache/>
-         ```
+       ```xml
+       <!--开启user支持二级缓存-->
+       <cache/>
+       ```
 
-      3. 让当前的操作支持二级缓存（在select标签中配置）
+    3. 让当前的操作支持二级缓存（在select标签中配置）
 
-         ```xml
-         <!-- 根据id查询用户 -->
-         <select id="findById" parameterType="INT" resultType="user" useCache="true">
-             select * from user where id = #{uid}
-         </select>
-         ```
+       ```xml
+       <!-- 根据id查询用户 -->
+       <select id="findById" parameterType="INT" resultType="user" useCache="true">
+           select * from user where id = #{uid}
+       </select>
+       ```
+  
+* MyBatis内置的二级缓存算法
 
-* 使用注解开发
+  > Mybatis的所有Cache算法都是基于装饰器模式对PerpetualCache扩展增加功能。
 
-  * 一对一、多对一
+  1. FIFO:先入先出,基于LinkedList实现；
+  2. LRU:最近最少使用，基于LinkedHashMap实现，在put的时候，自动移除最少使用缓存对象；
+  3. SOFT:对Cache的value进行SoftReference包装；当缓存对象是Soft reference可达时，gc会向系统申请更多内存，而不是直接回收它，当内存不足的时候才回收它；
+  4. WEAK:对Cache的value进行WeakReference包装；WeakReference不会强制对象保存在内存中。它拥有比较短暂的生命周期，允许你使用垃圾回收器的能力去权衡一个对象的可达性。在垃圾回收器扫描它所管辖的内存区域过程中，一旦gc发现对象是weakReference可达，就会把它放到ReferenceQueue中，等下次gc时回收它。
 
-    ```java
-    /**
-    * 查询所有账户，并且获取每个账户所属的用户信息
-    * @return
-    */
-        @Select("select * from account")
-        @Results(id="accountMap",value = {
-            @Result(id=true,column = "id",property = "id"),
-            @Result(column = "uid",property = "uid"),
-            @Result(column = "money",property = "money"),
-            @Result(property = "user",column = "uid", one=@One(select="com.itheima.dao.IUserDao.findById",fetchType= FetchType.EAGER))
-        })
-    List<Account> findAll();
-    
-    /**
-    * 根据用户id查询账户信息
-    * @param userId
-    * @return
-    */
-    @Select("select * from account where uid = #{userId}")
-    List<Account> findAccountByUid(Integer userId);
-    ```
+### 4.使用注解开发
 
-  * 一对多
+* 一对一、多对一
 
-    ```java
-    /**
-    * 查询所有用户
-    * @return
-    */
-    @Select("select * from user")
-        @Results(id="userMap",value={
-            @Result(id=true,column = "id",property = "userId"),
-            @Result(column = "username",property = "userName"),
-            @Result(column = "address",property = "userAddress"),
-            @Result(column = "sex",property = "userSex"),
-            @Result(column = "birthday",property = "userBirthday"),
-            @Result(property = "accounts",column = "id",
-                many = @Many(select = "com.itheima.dao.IAccountDao.findAccountByUid",
-                	fetchType = FetchType.LAZY))
-        })
-    List<User> findAll();
-    
-    /**
-    * 根据id查询用户
-    * @param userId
-    * @return
-    */
-    @Select("select * from user  where id=#{id} ")
-    @ResultMap("userMap")
-    User findById(Integer userId);
-    
-     /**
-     * 根据用户名称模糊查询
-     * @param username
-     * @return
-     */
-     @Select("select * from user where username like #{username} ")
-     @ResultMap("userMap")
-     List<User> findUserByName(String username);
-    ```
+  ```java
+  /**
+  * 查询所有账户，并且获取每个账户所属的用户信息
+  * @return
+  */
+      @Select("select * from account")
+      @Results(id="accountMap",value = {
+          @Result(id=true,column = "id",property = "id"),
+          @Result(column = "uid",property = "uid"),
+          @Result(column = "money",property = "money"),
+          @Result(property = "user",column = "uid", one=@One(select="com.itheima.dao.IUserDao.findById",fetchType= FetchType.EAGER))
+      })
+  List<Account> findAll();
+  
+  /**
+  * 根据用户id查询账户信息
+  * @param userId
+  * @return
+  */
+  @Select("select * from account where uid = #{userId}")
+  List<Account> findAccountByUid(Integer userId);
+  ```
 
-  * 缓存配置
+* 一对多
 
-    ```java
-    @CacheNamespace(blocking = true)
-    ```
+  ```java
+  /**
+  * 查询所有用户
+  * @return
+  */
+  @Select("select * from user")
+      @Results(id="userMap",value={
+          @Result(id=true,column = "id",property = "userId"),
+          @Result(column = "username",property = "userName"),
+          @Result(column = "address",property = "userAddress"),
+          @Result(column = "sex",property = "userSex"),
+          @Result(column = "birthday",property = "userBirthday"),
+          @Result(property = "accounts",column = "id",
+              many = @Many(select = "com.itheima.dao.IAccountDao.findAccountByUid",
+              	fetchType = FetchType.LAZY))
+      })
+  List<User> findAll();
+  
+  /**
+  * 根据id查询用户
+  * @param userId
+  * @return
+  */
+  @Select("select * from user  where id=#{id} ")
+  @ResultMap("userMap")
+  User findById(Integer userId);
+  
+   /**
+   * 根据用户名称模糊查询
+   * @param username
+   * @return
+   */
+   @Select("select * from user where username like #{username} ")
+   @ResultMap("userMap")
+   List<User> findUserByName(String username);
+  ```
+
+* 缓存配置
+
+  ```java
+  @CacheNamespace(blocking = true)
+  ```
