@@ -20,7 +20,7 @@
 		该缓存是无效的（可能有其它CPU修改了该缓存行）
 	* 乱序执行优化：处理器为提高运行速度做出违背代码原有顺序的优化
 
-![MESI缓存一致性](C:\Users\hawk4\Desktop\临时\笔记\笔记图片\MESI缓存一致性.png)
+![MESI缓存一致性](..\笔记图片\MESI缓存一致性.png)
 
 ## JMM
 - JMM规范：它规定了一个线程如何和何时能够看到由其他线程修改过后的共享变量值以及在必须时如何同步地访问共享变量
@@ -55,46 +55,47 @@
 
 - 原子性
 提供了互斥访问，同一时刻只能有一个线程来对它进行操作
+	
 	* AtomicXXX：CAS U.weakCompareAndSetInt() 实现方式是通过循环判断底层值是否被其他线程进行了更改，若未更改则继续 由于更改失败情况下将循环判断，会浪费资源 适用于低并发下
 	```java
-	int v;
+  int v;
         do {
             v = getIntVolatile(o, offset);
         } while (!weakCompareAndSetInt(o, offset, v, v + delta));
-        return v;
+	      return v;
 	```
 	* AtomicLong: LongAdder() Hash算法分散至各节点提高并行，可能损失精度，高并发下效率高
 	* AtomicReference：CAS
 	```
 	AtomicReference<Integer> count = new AtomicReference<>(0);
-	count.compareAndSet(0, 2); // 2
+  count.compareAndSet(0, 2); // 2
     count.compareAndSet(0, 1); // no
     count.compareAndSet(1, 3); // no
-    count.compareAndSet(2, 4); // 4	
+	  count.compareAndSet(2, 4); // 4	
 	```
-	* AtomicIntegerFieldUpdater
-
+* AtomicIntegerFieldUpdater
+	
 	```
-	public class AtomicExample5 {
+  public class AtomicExample5 {
     private static AtomicIntegerFieldUpdater<AtomicExample5> updater =
             AtomicIntegerFieldUpdater.newUpdater(AtomicExample5.class, "count");
     
-    public volatile int count = 100;
-
-    public static void main(String[] args) {
-
-        AtomicExample5 example5 = new AtomicExample5();
-
+  public volatile int count = 100;
+  
+  public static void main(String[] args) {
+  
+      AtomicExample5 example5 = new AtomicExample5();
+  
         if (updater.compareAndSet(example5, 100, 120)) {
             log.info("update success 1, {}", example5.getCount());
-        }
-
+      }
+  
         if (updater.compareAndSet(example5, 100, 120)) {
             log.info("update success 2, {}", example5.getCount());
         } else {
             log.info("update failed, {}", example5.getCount());
         }
-    }
+	  }
 	}
 	```
 	
@@ -1158,4 +1159,4 @@ Spring没有对bean的多线程安全问题做出任何保证与措施。对于�
 
 #### Hashmap与ConcurrentHashMap
 
-https://blog.51cto.com/zero01/2307070
+该笔记内容主要来源与博客https://blog.51cto.com/zero01/2307070，个人进行增删补充
