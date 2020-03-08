@@ -149,74 +149,43 @@ https://www.cnblogs.com/lyjun/p/11371851.html
 
       ```
       这个文件实际上是Linux PAM 也就是插入式认证模块的配置文件。
-      
         打开文件数的限制。
-      
         * soft nofile 65535
-      
         * hard nofile 65535
-      
         加到limit.conf 文件末尾就可以了
-      
         *      表示对所有用户有效
-      
         soft    指的是当前系统生效的设置
-      
         hard    表明系统中能设定的最大值
-      
         nofile  表示所限制的资源是打开文件的最大数目
-      
         65535  就是限制的数量
-      
         结论：
-      
           把可打开的文件数量增加到了65535个以保证可以打开足够多的文件句柄。
-      
         注意：
-      
           这个文件的修改需要重启系统才可以生效。
       ```
-
       
-
     * 磁盘调度策略(/sys/block/devname/queue/scheduler)
-
+    
       ```
       cat /sys/block/sda/queue/scheduler
-      
       noop anticipatory deadline [cfq]
-      
       noop(电梯式调度策略)
-      
           NOOP实现了一个FIFO队列，它像电梯的工作方法一样对I/O请求进行组织，当
-      
           有一个新的请求到来时，它将强求合并最近的请求之后，以此来保证请求同一
-      
           介质。NOOP倾向饿死读而利于写，因此NOOP对于闪存设备、RAM及嵌入式系统
-      
           是最好的选择。
-      
       deadline(截止时间调度策略) 
-      
           Deadline确保了再一个截止时间内服务请求，这个截止时间是可调整的，而
-      
-          默认读期限短语写期限。这样就防止了写操作因为不能被读取而饿死的现象，
-      
+      默认读期限短语写期限。这样就防止了写操作因为不能被读取而饿死的现象，
           Deadline对数据库类应用是最好的选择。
-      
-      anticipatory(预料I/O调度策略)
-      
+  anticipatory(预料I/O调度策略)
           本质上与Deadline一样，但在最后一次读操作后，要等6ms，才能继续进行对
-      
-          其它I/O请求进行调度。他会在每个6ms中插入行的I/O操作，而会将一些小写
-      
+      其它I/O请求进行调度。他会在每个6ms中插入行的I/O操作，而会将一些小写
           入流合并成一个大写入流，用写入延时换区最大的写入吞吐量。AS适合于*写
-      
           入较多的环境*，比如文件服务器，AS对数据库环境表现很差。
       ```
-
       
-
+  
 * 数据库存储引擎的选择
 
 * **数据库参数配置**
@@ -225,13 +194,13 @@ https://www.cnblogs.com/lyjun/p/11371851.html
 
 ## MySQL体系结构
 
-<img src="C:\Users\hawk4\Desktop\临时\笔记\MySQL体系结构.png" alt="MySQL体系结构" style="zoom: 33%;" />
+<img src="..\笔记图片\MySQL体系结构.png" alt="MySQL体系结构" style="zoom: 33%;" />
 
 * 客户端
   * PHP\\JAVA\\C API\\.Net\\ODBC\\JDBC
 
 * 存储引擎
-  * InnoDB\\MyISAM\\CSV\\Memory\\ARCHIVE\\xtraDB
+  * InnoDB\\MyISAM\\CSV\\Memory\\ARCHIVE\\ExtraDB
 
 #### MyISAM
 
