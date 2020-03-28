@@ -10,8 +10,6 @@
 
 ## 2、微服务
 
-
-
 微服务：架构风格（服务微化）
 
 一个应用应该是一组小型服务；可以通过HTTP的方式进行互通；
@@ -21,8 +19,6 @@
 微服务：每一个功能元素最终都是一个可独立替换和独立升级的软件单元；
 
 [微服务文档](https://martinfowler.com/articles/microservices.html#MicroservicesAndSoa)
-
-
 
 ## 3、环境准备
 
@@ -37,8 +33,6 @@
 –SpringBoot 1.5.9.RELEASE：1.5.9；
 
 统一环境；
-
-
 
 ### 1、MAVEN设置；
 
@@ -74,8 +68,6 @@
 一个功能：
 
 浏览器发送hello请求，服务器接受请求并处理，响应Hello World字符串；
-
-
 
 ### 1、创建一个maven工程；（jar）
 
@@ -189,11 +181,7 @@ Spring Boot的版本仲裁中心；
 
 ​	spring-boot-starter：spring-boot场景启动器；帮我们导入了web模块正常运行所依赖的组件；
 
-
-
 Spring Boot将所有的功能场景都抽取出来，做成一个个的starters（启动器），只需要在项目里面引入这些starter相关场景的所有依赖都会导入进来。要用什么功能就导入什么场景的启动器
-
-
 
 ### 2、主程序类，主入口类
 
@@ -205,17 +193,13 @@ Spring Boot将所有的功能场景都抽取出来，做成一个个的starters�
 public class HelloWorldMainApplication {
 
     public static void main(String[] args) {
-
         // Spring应用启动起来
         SpringApplication.run(HelloWorldMainApplication.class,args);
     }
 }
-
 ```
 
 @**SpringBootApplication**:    Spring Boot应用标注在某个类上说明这个类是SpringBoot的主配置类，SpringBoot就应该运行这个类的main方法来启动SpringBoot应用；
-
-
 
 ```java
 @Target(ElementType.TYPE)
@@ -237,8 +221,6 @@ public @interface SpringBootApplication {
 ​		@**Configuration**:配置类上来标注这个注解；
 
 ​			配置类 -----  配置文件；配置类也是容器中的一个组件；@Component
-
-
 
 @**EnableAutoConfiguration**：开启自动配置功能；
 
@@ -272,19 +254,9 @@ public @interface EnableAutoConfiguration {
 
 ​		SpringFactoriesLoader.loadFactoryNames(EnableAutoConfiguration.class,classLoader)；
 
-
-
 ==Spring Boot在启动的时候从类路径下的META-INF/spring.factories中获取EnableAutoConfiguration指定的值，将这些值作为自动配置类导入到容器中，自动配置类就生效，帮我们进行自动配置工作；==以前我们需要自己配置的东西，自动配置类都帮我们；
 
 J2EE的整体整合解决方案和自动配置都在spring-boot-autoconfigure-1.5.9.RELEASE.jar；
-
-
-
-​		
-
-==Spring注解版（谷粒学院）==
-
-
 
 ## 6、使用Spring Initializer快速创建Spring Boot项目
 
@@ -304,11 +276,7 @@ IDE都支持使用Spring的项目创建向导快速创建一个Spring Boot项目
 
 ### 2、STS使用 Spring Starter Project快速创建项目
 
-
-
 -------------
-
-
 
 # 配置文件
 
@@ -320,11 +288,7 @@ SpringBoot使用一个全局的配置文件，配置文件名是固定的；
 
 •application.yml
 
-
-
 配置文件的作用：修改SpringBoot自动配置的默认值；SpringBoot在底层都给我们自动配置好；
-
-
 
 YAML（YAML Ain't Markup Language）
 
@@ -353,8 +317,6 @@ server:
 </server>
 ```
 
-
-
 ## 2、YAML语法：
 
 ### 1、基本语法
@@ -371,8 +333,6 @@ server:
 
 属性和值也是大小写敏感；
 
-
-
 ### 2、值的写法
 
 #### 字面量：普通的值（数字，字符串，布尔）
@@ -388,8 +348,6 @@ server:
 ​		''：单引号；会转义特殊字符，特殊字符最终只是一个普通的字符串数据
 
 ​				name:   ‘zhangsan \n lisi’：输出；zhangsan \n  lisi
-
-
 
 #### 对象、Map（属性和值）（键值对）：
 
@@ -409,8 +367,6 @@ friends:
 friends: {lastName: zhangsan,age: 18}
 ```
 
-
-
 #### 数组（List、Set）：
 
 用- 值表示数组中的一个元素
@@ -427,8 +383,6 @@ pets:
 ```yaml
 pets: [cat,dog,pig]
 ```
-
-
 
 ## 3、配置文件值注入
 
@@ -472,10 +426,7 @@ public class Person {
     private Map<String,Object> maps;
     private List<Object> lists;
     private Dog dog;
-
 ```
-
-
 
 我们可以导入配置文件处理器，以后编写配置就有提示了
 
@@ -509,8 +460,6 @@ public class Person {
 如果说，我们只是在某个业务逻辑中需要获取一下配置文件中的某项值，使用@Value；
 
 如果说，我们专门编写了一个javaBean来和配置文件进行映射，我们就直接使用@ConfigurationProperties；
-
-
 
 #### 3、配置文件注入值数据校验
 
@@ -577,10 +526,7 @@ public class Person {
     private Integer age;
     //@Value("true")
     private Boolean boss;
-
 ```
-
-
 
 @**ImportResource**：导入Spring的配置文件，让配置文件里面的内容生效；
 
@@ -593,8 +539,6 @@ Spring Boot里面没有Spring的配置文件，我们自己编写的配置文件
 导入Spring的配置文件让其生效
 ```
 
-
-
 不来编写Spring的配置文件
 
 ```xml
@@ -602,8 +546,6 @@ Spring Boot里面没有Spring的配置文件，我们自己编写的配置文件
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-
     <bean id="helloService" class="com.atguigu.springboot.service.HelloService"></bean>
 </beans>
 ```
@@ -691,10 +633,6 @@ spring:
   profiles: prod  #指定属于哪个环境
 ```
 
-
-
-
-
 ### 3、激活指定profile
 
 ​	1、在配置文件中指定  spring.profiles.active=dev
@@ -708,8 +646,6 @@ spring:
 ​	3、虚拟机参数；
 
 ​		-Dspring.profiles.active=dev
-
-
 
 ## 6、配置文件加载位置
 
@@ -726,8 +662,6 @@ springboot 启动会扫描以下位置的application.properties或者application
 优先级由高到底，高优先级的配置会覆盖低优先级的配置；
 
 SpringBoot会从这四个位置全部加载主配置文件；**互补配置**；
-
-
 
 ==我们还可以通过spring.config.location来改变默认的配置文件位置==
 
@@ -783,8 +717,6 @@ java -jar spring-boot-02-config-02-0.0.1-SNAPSHOT.jar --server.port=8087  --serv
 
 [配置文件能配置的属性参照](https://docs.spring.io/spring-boot/docs/1.5.9.RELEASE/reference/htmlsingle/#common-application-properties)
 
-
-
 ### 1、**自动配置原理：**
 
 1）SpringBoot启动的时候加载主配置类，开启了自动配置功能 ==@EnableAutoConfiguration==
@@ -795,15 +727,14 @@ java -jar spring-boot-02-config-02-0.0.1-SNAPSHOT.jar --server.port=8087  --serv
 
 - 可以查看selectImports()方法的内容；
 
-- List<String> configurations = getCandidateConfigurations(annotationMetadata,      attributes);获取候选的配置
+- List<String> configurations = getCandidateConfigurations(annotationMetadata,attributes);获取候选的配置
 
   - ```java
-    SpringFactoriesLoader.loadFactoryNames()
+    SpringFactoriesLoader.loadFactoryNames()```
     扫描所有jar包类路径下  META-INF/spring.factories
     把扫描到的这些文件的内容包装成properties对象
     从properties中获取到EnableAutoConfiguration.class类（类名）对应的值，然后把他们添加在容器中
-```
-    
+    ```
 
 **==将 类路径下  META-INF/spring.factories 里面配置的所有EnableAutoConfiguration的值加入到了容器中；==**
 
@@ -949,12 +880,6 @@ public class HttpEncodingAutoConfiguration {
 
 一但这个配置类生效；这个配置类就会给容器中添加各种组件；这些组件的属性是从对应的properties类中获取的，这些类里面的每一个属性又是和配置文件绑定的；
 
-
-
-
-
-
-
 5）所有在配置文件中能配置的属性都是在xxxxProperties类中封装者‘；配置文件能配置什么就可以参照某个功能对应的这个属性类
 
 ```java
@@ -963,10 +888,6 @@ public class HttpEncodingProperties {
 
    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 ```
-
-
-
-
 
 **精髓：**
 
@@ -978,19 +899,13 @@ public class HttpEncodingProperties {
 
 ​	**4）给容器中自动配置类添加组件的时候，会从properties类中获取某些属性。我们就可以在配置文件中指定这些属性的值；**
 
-
-
 xxxxAutoConfigurartion：自动配置类；
 
 给容器中添加组件
 
 xxxxProperties:封装配置文件中相关属性；
 
-
-
 ### 2、细节
-
-
 
 #### 1、@Conditional派生注解（Spring注解版原生的@Conditional作用）
 
@@ -1022,15 +937,13 @@ xxxxProperties:封装配置文件中相关属性；
 AUTO-CONFIGURATION REPORT
 =========================
 
-
 Positive matches:（自动配置类启用的）
 -----------------
 
    DispatcherServletAutoConfiguration matched:
       - @ConditionalOnClass found required class 'org.springframework.web.servlet.DispatcherServlet'; @ConditionalOnMissingClass did not find unwanted class (OnClassCondition)
       - @ConditionalOnWebApplication (required) found StandardServletEnvironment (OnWebApplicationCondition)
-        
-    
+
 Negative matches:（没有启动，没有匹配成功的自动配置类）
 -----------------
 
@@ -1043,10 +956,6 @@ Negative matches:（没有启动，没有匹配成功的自动配置类）
          - @ConditionalOnClass did not find required classes 'org.aspectj.lang.annotation.Aspect', 'org.aspectj.lang.reflect.Advice' (OnClassCondition)
         
 ```
-
-
-
-
 
 # 日志
 
@@ -1068,8 +977,6 @@ Negative matches:（没有启动，没有匹配成功的自动配置类）
 
 ​			给项目中导入具体的日志实现就行了；我们之前的日志框架都是实现的抽象层；
 
-
-
 **市面上的日志框架；**
 
 JUL、JCL、Jboss-logging、logback、log4j、log4j2、slf4j....
@@ -1084,13 +991,9 @@ JUL、JCL、Jboss-logging、logback、log4j、log4j2、slf4j....
 
 日志实现：Logback；
 
-
-
 SpringBoot：底层是Spring框架，Spring框架默认是用JCL；‘
 
 ​	**==SpringBoot选用 SLF4j和logback；==**
-
-
 
 ## 2、SLF4j使用
 
@@ -1134,8 +1037,6 @@ a（slf4j+logback）: Spring（commons-logging）、Hibernate（jboss-logging）
 
 ==3、我们导入slf4j其他的实现==
 
-
-
 ## 3、SpringBoot日志关系
 
 ```xml
@@ -1144,8 +1045,6 @@ a（slf4j+logback）: Spring（commons-logging）、Hibernate（jboss-logging）
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 ```
-
-
 
 SpringBoot使用它来做日志功能；
 
@@ -1179,8 +1078,6 @@ public abstract class LogFactory {
 
 <img src="../笔记图片/images/搜狗截图20180131221411.png">
 
-
-
 ​	4）、如果我们要引入其他框架？一定要把这个框架的默认日志依赖移除掉？
 
 ​			Spring框架用的是commons-logging；
@@ -1207,43 +1104,39 @@ public abstract class LogFactory {
 SpringBoot默认帮我们配置好了日志；
 
 ```java
-	//记录器
-	Logger logger = LoggerFactory.getLogger(getClass());
-	@Test
-	public void contextLoads() {
-		//System.out.println();
+//记录器
+Logger logger = LoggerFactory.getLogger(getClass());
+@Test
+public void contextLoads() {
+    //System.out.println();
 
-		//日志的级别；
-		//由低到高   trace<debug<info<warn<error
-		//可以调整输出的日志级别；日志就只会在这个级别以以后的高级别生效
-		logger.trace("这是trace日志...");
-		logger.debug("这是debug日志...");
-		//SpringBoot默认给我们使用的是info级别的，没有指定级别的就用SpringBoot默认规定的级别；root级别
-		logger.info("这是info日志...");
-		logger.warn("这是warn日志...");
-		logger.error("这是error日志...");
+    //日志的级别；
+    //由低到高   trace<debug<info<warn<error
+    //可以调整输出的日志级别；日志就只会在这个级别以以后的高级别生效
+    logger.trace("这是trace日志...");
+    logger.debug("这是debug日志...");
+    //SpringBoot默认给我们使用的是info级别的，没有指定级别的就用SpringBoot默认规定的级别；root级别
+    logger.info("这是info日志...");
+    logger.warn("这是warn日志...");
+    logger.error("这是error日志...");
 
 
-	}
+}
 ```
 
-
-
-        日志输出格式：
-    		%d表示日期时间，
-    		%thread表示线程名，
-    		%-5level：级别从左显示5个字符宽度
-    		%logger{50} 表示logger名字最长50个字符，否则按照句点分割。 
-    		%msg：日志消息，
-    		%n是换行符
-        -->
-        %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n
+    日志输出格式：
+        %d表示日期时间，
+        %thread表示线程名，
+        %-5level：级别从左显示5个字符宽度
+        %logger{50} 表示logger名字最长50个字符，否则按照句点分割。 
+        %msg：日志消息，
+        %n是换行符
+    -->
+    %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n
 SpringBoot修改日志的默认配置
 
 ```properties
 logging.level.com.atguigu=trace
-
-
 #logging.path=
 # 不指定路径在当前项目下生成springboot.log日志
 # 可以指定完整的路径；
@@ -1310,8 +1203,6 @@ logback.xml：直接就被日志框架识别了；
     </appender>
 ```
 
-
-
 如果使用logback.xml作为日志配置文件，还要使用profile功能，会有以下错误
 
  `no applicable action for [springProfile]`
@@ -1342,12 +1233,7 @@ slf4j+log4j的方式；
   <groupId>org.slf4j</groupId>
   <artifactId>slf4j-log4j12</artifactId>
 </dependency>
-
 ```
-
-
-
-
 
 切换为log4j2
 
@@ -1362,7 +1248,6 @@ slf4j+log4j的方式；
                 </exclusion>
             </exclusions>
         </dependency>
-
 <dependency>
   <groupId>org.springframework.boot</groupId>
   <artifactId>spring-boot-starter-log4j2</artifactId>
@@ -1375,8 +1260,6 @@ slf4j+log4j的方式；
 
 ## 1、简介
 
-
-
 使用SpringBoot；
 
 **1）、创建SpringBoot应用，选中我们需要的模块；**
@@ -1385,8 +1268,6 @@ slf4j+log4j的方式；
 
 **3）、自己编写业务代码；**
 
-
-
 **自动配置原理？**
 
 这个场景SpringBoot帮我们配置了什么？能不能修改？能修改哪些配置？能不能扩展？xxx
@@ -1394,10 +1275,7 @@ slf4j+log4j的方式；
 ```
 xxxxAutoConfiguration：帮我们给容器中自动配置组件；
 xxxxProperties:配置类来封装配置文件的内容；
-
 ```
-
-
 
 ## 2、SpringBoot对静态资源的映射规则；
 
@@ -1406,8 +1284,6 @@ xxxxProperties:配置类来封装配置文件的内容；
 public class ResourceProperties implements ResourceLoaderAware {
   //可以设置和静态资源有关的参数，缓存时间等
 ```
-
-
 
 ```java
 	WebMvcAuotConfiguration：
@@ -1435,7 +1311,6 @@ public class ResourceProperties implements ResourceLoaderAware {
 						.setCachePeriod(cachePeriod));
 			}
 		}
-
         //配置欢迎页映射
 		@Bean
 		public WelcomePageHandlerMapping welcomePageHandlerMapping(
@@ -1443,7 +1318,6 @@ public class ResourceProperties implements ResourceLoaderAware {
 			return new WelcomePageHandlerMapping(resourceProperties.getWelcomePage(),
 					this.mvcProperties.getStaticPathPattern());
 		}
-
        //配置喜欢的图标
 		@Configuration
 		@ConditionalOnProperty(value = "spring.mvc.favicon.enabled", matchIfMissing = true)
@@ -1454,7 +1328,6 @@ public class ResourceProperties implements ResourceLoaderAware {
 			public FaviconConfiguration(ResourceProperties resourceProperties) {
 				this.resourceProperties = resourceProperties;
 			}
-
 			@Bean
 			public SimpleUrlHandlerMapping faviconHandlerMapping() {
 				SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
@@ -1476,8 +1349,6 @@ public class ResourceProperties implements ResourceLoaderAware {
 		}
 
 ```
-
-
 
 ==1）、所有 /webjars/** ，都去 classpath:/META-INF/resources/webjars/ 找资源；==
 
@@ -1928,8 +1799,6 @@ public class MyMvcConfig extends WebMvcConfigurerAdapter {
 
 <img src="../笔记图片/images/搜狗截图20180211130721.png">
 
-
-
 2）、SpringBoot自动配置好了管理国际化资源文件的组件；
 
 ```java
@@ -1962,8 +1831,6 @@ public class MessageSourceAutoConfiguration {
 		return messageSource;
 	}
 ```
-
-
 
 3）、去页面获取国际化的值；
 
