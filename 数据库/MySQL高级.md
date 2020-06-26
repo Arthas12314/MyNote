@@ -568,7 +568,6 @@ https://www.cnblogs.com/lyjun/p/11371851.html
   * 编写SQL查询出每一个用户的订单总金额
 
     ```mysql
-    
     select 下单用户名,sum(d.商品价格*b.商品数量) 
     from 订单表 a 
     join 订单商品关联表 b on a.订单编号=b.订单编号 

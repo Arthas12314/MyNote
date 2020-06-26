@@ -178,7 +178,7 @@ ORDER BY 排序列表(ASC|DESC);
 
   * 流程控制函数
     * IF类似三目运算符?:
-       
+      
        * SELECT IF(10>5,'大'，'小');
        
        * CASE
@@ -199,7 +199,7 @@ ORDER BY 排序列表(ASC|DESC);
          END AS 工资级别
          FROM employees;
          ```
-       
+    
   * 分组函数：
   
     用于统计又称聚合、统计函数，SUM、AVG、MAX、MIN、COUNT
@@ -899,7 +899,6 @@ IF EXISTS books;
     rollback to 节点名;
     ```
 
-    
 
 ### 视图
 
