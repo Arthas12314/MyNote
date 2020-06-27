@@ -62,8 +62,6 @@ ZooKeeper is a centralized service for maintaining configuration information, na
 3. 严格顺序访问
    - 对于来自客户端的每个更新请求，`Zookeeper`都会分配一个全局唯一的递增编号，这个编号反应了所有事务操作的先后顺序
 
-
-
 #### 数据模型
 
 `zookeeper`的数据结点可以视为树状结构(或目录)，树中的各个结点被称为`znode `(即`zookeeper node`)，一个`znode`可以由多个子结点。`zookeeper`结点在结构上表现为树状；
@@ -92,17 +90,19 @@ ZooKeeper is a centralized service for maintaining configuration information, na
 
 <https://zookeeper.apache.org/doc/r3.4.14/zookeeperProgrammers.html#sc_zkDataModel_znodes>
 
-- `cZxid`数据结点创建时的事务ID——针对于`zookeeper`数据结点的管理：我们对结点数据的一些写操作都会导致`zookeeper`自动地为我们去开启一个事务，并且自动地去为每一个事务维护一个事务`ID`
-- `ctime`数据结点创建时的时间
-- `mZxid`数据结点最后一次更新时的事务ID
-- `mtime`数据结点最后一次更新时的时间
-- `pZxid`数据节点最后一次修改此`znode`子节点更改的`zxid`
-- `cversion`子结点的更改次数
-- `dataVersion`结点数据的更改次数
-- `aclVersion`结点的ACL更改次数——类似`linux`的权限列表，维护的是当前结点的权限列表被修改的次数
-- `ephemeralOwner`如果结点是临时结点，则表示创建该结点的会话的`SessionID`；如果是持久结点，该属性值为0
-- `dataLength`数据内容的长度
-- `numChildren`数据结点当前的子结点个数
+| 状态属性       | 说明                                                         |
+| -------------- | ------------------------------------------------------------ |
+| cZxid          | 数据结点创建时的事务ID——针对于`zookeeper`数据结点的管理：我们对结点数据的一些写操作都会导致`zookeeper`自动地为我们去开启一个事务，并且自动地去为每一个事务维护一个事务`ID` |
+| ctime          | 数据结点创建时的时间                                         |
+| mZxid          | 数据结点最后一次更新时的事务ID                               |
+| mtime          | 数据结点最后一次更新时的时间                                 |
+| pZxid          | 数据节点最后一次修改此`znode`子节点更改的zxid                |
+| cversion       | 子结点的更改次数                                             |
+| dataVersion    | 结点数据的更改次数                                           |
+| aclVersion     | 结点的ACL更改次数——类似`linux`的权限列表，维护的是当前结点的权限列表被修改的次数 |
+| ephemeralOwner | 如果结点是临时结点，则表示创建该结点的会话的`SessionID`；如果是持久结点，该属性值为0 |
+| dataLength     | 数据内容的长度                                               |
+| numChildren    | 数据结点当前的子结点个数                                     |
 
 **结点类型**
 
@@ -190,11 +190,6 @@ ZooKeeper is a centralized service for maintaining configuration information, na
      ./zkCli.sh
      ```
 
-     
-
-
-
-
 
 #### 常用shell命令
 
@@ -276,8 +271,6 @@ set /hadoop 45678        # 测试
 ls /hadoop watch         # 添加监听器
 set /hadoop/node "node"
 ```
-
-
 
 ### zookeeper的Acl权限控制
 
