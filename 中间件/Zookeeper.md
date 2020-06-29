@@ -379,7 +379,6 @@ set /hadoop/node "node"
   get /hadoop
   ```
 
-  
 
 **Digest授权模式**
 
@@ -401,8 +400,6 @@ set /hadoop/node "node"
     get /hadoop
     ```
 
-
-
 **多种授权模式**
 
 仅需逗号隔开
@@ -411,7 +408,6 @@ set /hadoop/node "node"
    setAcl /hadoop ip:192.168.133.132:cdrwa,auth:hadoop:cdrwa,digest:itcast:673OfZhUE8JEFMcu0l64qI8e5ek=:cdrwa
   ```
 
-  
 
 #### acl 超级管理员
 
@@ -453,53 +449,48 @@ set /hadoop/node "node"
   get /hadoop
   ```
 
-  
-
-
-
-
 
 ### zookeeper的 JavaAPI
 
 ```html
 <dependency>
-            <groupId>com.101tec</groupId>
-            <artifactId>zkclient</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>zookeeper</artifactId>
-                    <groupId>org.apache.zookeeper</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-            <version>0.9</version>
-        </dependency>
-        <dependency>
+    <groupId>com.101tec</groupId>
+    <artifactId>zkclient</artifactId>
+    <exclusions>
+        <exclusion>
             <artifactId>zookeeper</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
             <groupId>org.apache.zookeeper</groupId>
-            <version>3.4.10</version>
-        </dependency>
+        </exclusion>
+        <exclusion>
+            <artifactId>log4j</artifactId>
+            <groupId>log4j</groupId>
+        </exclusion>
+        <exclusion>
+            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+            <artifactId>slf4j-api</artifactId>
+            <groupId>org.slf4j</groupId>
+        </exclusion>
+    </exclusions>
+    <version>0.9</version>
+</dependency>
+<dependency>
+    <artifactId>zookeeper</artifactId>
+    <exclusions>
+        <exclusion>
+            <artifactId>log4j</artifactId>
+            <groupId>log4j</groupId>
+        </exclusion>
+        <exclusion>
+            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>org.slf4j</groupId>
+        </exclusion>
+    </exclusions>
+    <groupId>org.apache.zookeeper</groupId>
+    <version>3.4.10</version>
+</dependency>
 ```
 
 `zonde `是 `zookeeper `集合的核心组件，` zookeeper API` 提供了一小组使用 `zookeeper `集群来操作`znode `的所有细节
@@ -548,18 +539,18 @@ Zookeeper(String connectionString, int sessionTimeout, watcher watcher)
 
 ```java
 public static void main(String[] args) throws IOException, InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+    CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        ZooKeeper zookeeper = new ZooKeeper("192.168.133.133:2181", 5000, (WatchedEvent x) -> {
-            if (x.getState() == Watcher.Event.KeeperState.SyncConnected) {
-                System.out.println("连接成功");
-                countDownLatch.countDown();
-            }
-        });
-        countDownLatch.await();
-        System.out.println(zookeeper.getSessionId());
-        zookeeper.close();
-    }
+    ZooKeeper zookeeper = new ZooKeeper("192.168.133.133:2181", 5000, (WatchedEvent x) -> {
+        if (x.getState() == Watcher.Event.KeeperState.SyncConnected) {
+            System.out.println("连接成功");
+            countDownLatch.countDown();
+        }
+    });
+    countDownLatch.await();
+    System.out.println(zookeeper.getSessionId());
+    zookeeper.close();
+}
 ```
 
 ##### 新增节点
@@ -572,8 +563,6 @@ public static void main(String[] args) throws IOException, InterruptedException 
         AsynCallback.StringCallback callBack, Object ctx)
   ```
 
--  
-
 - | 参数         | 解释                                                         |
   | ------------ | ------------------------------------------------------------ |
   | `path`       | `znode `路径                                                 |
@@ -584,83 +573,82 @@ public static void main(String[] args) throws IOException, InterruptedException 
   | `ctx`        | 传递上下文参数                                               |
 
 示例：
+ ```java
+// 枚举的方式
+public static void createTest1() throws Exception{
+    String str = "node";
+    String s = zookeeper.create("/node", str.getBytes(),
+                                ZooDefs.Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+    System.out.println(s);
+}
+ ```
 
-- ```java
-  // 枚举的方式
-      public static void createTest1() throws Exception{
-          String str = "node";
-          String s = zookeeper.create("/node", str.getBytes(),
-                  ZooDefs.Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
-          System.out.println(s);
-      }
-  ```
+```java
+// 自定义的方式
+public static void createTest2() throws Exception{
+    ArrayList<ACL> acls = new ArrayList<>();
+    Id id = new Id("ip","192.168.133.133");
+    acls.add(new ACL(ZooDefs.Perms.ALL,id));
+    zookeeper.create("/create/node4","node4".getBytes(),acls,CreateMode.PERSISTENT);
+}
+```
 
-- ```java
-  // 自定义的方式
-      public static void createTest2() throws Exception{
-          ArrayList<ACL> acls = new ArrayList<>();
-          Id id = new Id("ip","192.168.133.133");
-          acls.add(new ACL(ZooDefs.Perms.ALL,id));
-          zookeeper.create("/create/node4","node4".getBytes(),acls,CreateMode.PERSISTENT);
-      }
-  ```
+```java
+// auth
+public static void createTest3() throws  Exception{
+    zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
+    zookeeper.create("/node5","node5".getBytes(),
+                     ZooDefs.Ids.CREATOR_ALL_ACL,CreateMode.PERSISTENT);
+}
+// 自定义的方式
+public static void createTest3() throws  Exception{
+    //        zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
+    //        zookeeper.create("/node5","node5".getBytes(),
+    //                ZooDefs.Ids.CREATOR_ALL_ACL,CreateMode.PERSISTENT);
+    zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
+    List<ACL> acls = new ArrayList<>();
+    Id id = new Id("auth","itcast");
+    acls.add(new ACL(ZooDefs.Perms.READ,id));
+    zookeeper.create("/create/node6","node6".getBytes(),
+                     acls,CreateMode.PERSISTENT);
+}
+```
 
-- ```java
-  // auth
-      public static void createTest3() throws  Exception{
-          zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
-          zookeeper.create("/node5","node5".getBytes(),
-                  ZooDefs.Ids.CREATOR_ALL_ACL,CreateMode.PERSISTENT);
-      }
-  // 自定义的方式
-      public static void createTest3() throws  Exception{
-  //        zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
-  //        zookeeper.create("/node5","node5".getBytes(),
-  //                ZooDefs.Ids.CREATOR_ALL_ACL,CreateMode.PERSISTENT);
-          zookeeper.addAuthInfo("digest","itcast:12345".getBytes());
-          List<ACL> acls = new ArrayList<>();
-          Id id = new Id("auth","itcast");
-          acls.add(new ACL(ZooDefs.Perms.READ,id));
-          zookeeper.create("/create/node6","node6".getBytes(),
-                  acls,CreateMode.PERSISTENT);
-      }
-  ```
+```java
+// digest 
+public static void createTest3() throws  Exception{
+    List<ACL> acls = new ArrayList<>();
+    Id id = new Id("digest","itcast:qUFSHxJjItUW/93UHFXFVGlvryY=");
+    acls.add(new ACL(ZooDefs.Perms.READ,id));
+    zookeeper.create("/create/node7","node7".getBytes(), 	
+                     acls,CreateMode.PERSISTENT);
+}
+```
 
-- ```java
-  // digest 
-  public static void createTest3() throws  Exception{
-      List<ACL> acls = new ArrayList<>();
-      Id id = new Id("digest","itcast:qUFSHxJjItUW/93UHFXFVGlvryY=");
-      acls.add(new ACL(ZooDefs.Perms.READ,id));
-      zookeeper.create("/create/node7","node7".getBytes(), 	
-                       acls,CreateMode.PERSISTENT);
-  }
-  ```
-
-- ```java
-  // 异步
-      public static void createTest4() throws  Exception{
-          zookeeper.create("/node12", "node12".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback(){
-              /**
+```java
+// 异步
+public static void createTest4() throws  Exception{
+    zookeeper.create("/node12", "node12".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback(){
+        /**
                * @param rc 状态，0 则为成功，以下的所有示例都是如此
                * @param path 路径
                * @param ctx 上下文参数
                * @param name 路径
                */
-              public void processResult(int rc, String path, Object ctx, String name){
-                  System.out.println(rc + " " + path + " " + name +  " " + ctx);
-              }
-          }, "I am context");
-          TimeUnit.SECONDS.sleep(1);
-          System.out.println("结束");
-      }
-  ```
+        public void processResult(int rc, String path, Object ctx, String name){
+            System.out.println(rc + " " + path + " " + name +  " " + ctx);
+        }
+    }, "I am context");
+    TimeUnit.SECONDS.sleep(1);
+    System.out.println("结束");
+}
+```
 
   
 
 ##### 修改节点
 
-同样也有两种修改方式(`异步和同步`)
+同样也有两种修改方式(异步和同步)
 
 - ```java
   // 同步
@@ -669,72 +657,68 @@ public static void main(String[] args) throws IOException, InterruptedException 
   setData(String path, byte[] data, int version, StatCallback callBack, Object ctx)
   ```
 
-- 
-
-- | 参数       | 解释                                                         |
-  | ---------- | ------------------------------------------------------------ |
-  | `path`     | 节点路径                                                     |
-  | `data`     | 数据                                                         |
-  | `version`  | 数据的版本号， -`1`代表不使用版本号，乐观锁机制              |
-  | `callBack` | 异步回调 `AsyncCallback.StatCallback`，和之前的回调方法参数不同，这个可以获取节点状态 |
-  | `ctx`      | 传递上下文参数                                               |
+- | 参数     | 解释                                                         |
+  | -------- | ------------------------------------------------------------ |
+  | path     | 节点路径                                                     |
+  | data     | 数据                                                         |
+  | version  | 数据的版本号， -`1`代表不使用版本号，乐观锁机制              |
+  | callBack | 异步回调 `AsyncCallback.StatCallback`，和之前的回调方法参数不同，这个可以获取节点状态 |
+  | ctx      | 传递上下文参数                                               |
 
 - ```java
-      public static void setData1() throws Exception{
-      	// arg1:节点的路径
-          // arg2:修改的数据
-          // arg3:数据的版本号 -1 代表版本号不参与更新
-          Stat stat = zookeeper.setData("/hadoop","hadoop-1".getBytes(),-1);
-      }
+  public static void setData1() throws Exception{
+      // arg1:节点的路径
+      // arg2:修改的数据
+      // arg3:数据的版本号 -1 代表版本号不参与更新
+      Stat stat = zookeeper.setData("/hadoop","hadoop-1".getBytes(),-1);
+  }
   ```
 
 - ```java
-      public static void setData2() throws Exception{
-          zookeeper.setData("/hadoop", "hadoop-1".getBytes(), 3 ,new AsyncCallback.StatCallback(){
-              @Override
-              public void processResult(int rc, String path, Object ctx, Stat stat) {
-                  // 讲道理，要判空
-                  System.out.println(rc + " " + path + " " + stat.getVersion() +  " " + ctx);
-              }
-          }, "I am context");
-      }
+  public static void setData2() throws Exception{
+      zookeeper.setData("/hadoop", "hadoop-1".getBytes(), 3 ,new AsyncCallback.StatCallback(){
+          @Override
+          public void processResult(int rc, String path, Object ctx, Stat stat) {
+              // 讲道理，要判空
+              System.out.println(rc + " " + path + " " + stat.getVersion() +  " " + ctx);
+          }
+      }, "I am context");
+  }
   ```
 
 ##### 删除节点
 
 异步、同步
 
-- ```java
+```java
   // 同步
   delete(String path, int version)
   // 异步
   delete(String path, int version, AsyncCallback.VoidCallback callBack, Object ctx)
-  ```
+```
 
-- 
+| 参数       | 解释                                            |
+| ---------- | ----------------------------------------------- |
+| `path`     | 节点路径                                        |
+| `version`  | 版本                                            |
+| `callBack` | 数据的版本号， -`1`代表不使用版本号，乐观锁机制 |
+| `ctx`      | 传递上下文参数                                  |
 
-- | 参数       | 解释                                            |
-  | ---------- | ----------------------------------------------- |
-  | `path`     | 节点路径                                        |
-  | `version`  | 版本                                            |
-  | `callBack` | 数据的版本号， -`1`代表不使用版本号，乐观锁机制 |
-  | `ctx`      | 传递上下文参数                                  |
+```java
+public static void deleteData1() throws Exception {
+    zookeeper.delete("/hadoop", 1);
+}
 
-- ```java
-      public static void deleteData1() throws Exception {
-          zookeeper.delete("/hadoop", 1);
-      }
-  
-      public static void deleteData2() throws Exception {
-          zookeeper.delete("/hadoop", 1, new AsyncCallback.VoidCallback() {
-              @Override
-              public void processResult(int rc, String path, Object ctx) {
-                  System.out.println(rc + " " + path + " " + ctx);
-              }
-          }, "I am context");
-          TimeUnit.SECONDS.sleep(1);
-      }
-  ```
+public static void deleteData2() throws Exception {
+    zookeeper.delete("/hadoop", 1, new AsyncCallback.VoidCallback() {
+        @Override
+        public void processResult(int rc, String path, Object ctx) {
+            System.out.println(rc + " " + path + " " + ctx);
+        }
+    }, "I am context");
+    TimeUnit.SECONDS.sleep(1);
+}
+```
 
   
 
@@ -742,137 +726,126 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
 同步、异步
 
-- ```java
+```java
   // 同步
   getData(String path, boolean watch, Stat stat)
   getData(String path, Watcher watcher, Stat stat)
   // 异步
   getData(String path, boolean watch, DataCallback callBack, Object ctx)
   getData(String path, Watcher watcher, DataCallback callBack, Object ctx)
-  ```
+```
 
--  
 
-- | 参数       | 解释                             |
-  | ---------- | -------------------------------- |
-  | `path`     | 节点路径                         |
-  | `boolean`  | 是否使用连接对象中注册的监听器   |
-  | `stat`     | 元数据                           |
-  | `callBack` | 异步回调接口，可以获得状态和数据 |
-  | `ctx`      | 传递上下文参数                   |
+| 参数     | 解释                             |
+| -------- | -------------------------------- |
+| path     | 节点路径                         |
+| boolean  | 是否使用连接对象中注册的监听器   |
+| stat     | 元数据                           |
+| callBack | 异步回调接口，可以获得状态和数据 |
+| ctx      | 传递上下文参数                   |
 
-- ```java
-      public static void getData1() throws Exception {
-          Stat stat = new Stat();
-          byte[] data = zookeeper.getData("/hadoop", false, stat);
-          System.out.println(new String(data));
-          // 判空
-          System.out.println(stat.getCtime());
-      }
-  
-      public static void getData2() throws Exception {
-          zookeeper.getData("/hadoop", false, new AsyncCallback.DataCallback() {
-              @Override
-              public void processResult(int rc, String path, Object ctx, byte[] bytes, Stat stat) {
-                  // 判空
-                  System.out.println(rc + " " + path
-                                     + " " + ctx + " " + new String(bytes) + " " + 
-                                     stat.getCzxid());
-              }
-          }, "I am context");
-          TimeUnit.SECONDS.sleep(3);
-      }
-  ```
+```java
+public static void getData1() throws Exception {
+    Stat stat = new Stat();
+    byte[] data = zookeeper.getData("/hadoop", false, stat);
+    System.out.println(new String(data));
+    // 判空
+    System.out.println(stat.getCtime());
+}
 
-  
+public static void getData2() throws Exception {
+    zookeeper.getData("/hadoop", false, new AsyncCallback.DataCallback() {
+        @Override
+        public void processResult(int rc, String path, Object ctx, byte[] bytes, Stat stat) {
+            // 判空
+            System.out.println(rc + " " + path
+                               + " " + ctx + " " + new String(bytes) + " " + 
+                               stat.getCzxid());
+        }
+    }, "I am context");
+    TimeUnit.SECONDS.sleep(3);
+}
+```
 
 ##### 查看子节点
 
 同步、异步
 
-- ```java
-  // 同步
-  getChildren(String path, boolean watch)
-  getChildren(String path, Watcher watcher)
-  getChildren(String path, boolean watch, Stat stat)    
-  getChildren(String path, Watcher watcher, Stat stat)
-  // 异步
-  getChildren(String path, boolean watch, ChildrenCallback callBack, Object ctx)    
-  getChildren(String path, Watcher watcher, ChildrenCallback callBack, Object ctx)
-  getChildren(String path, Watcher watcher, Children2Callback callBack, Object ctx)    
-  getChildren(String path, boolean watch, Children2Callback callBack, Object ctx)
-  ```
+```java
+// 同步
+getChildren(String path, boolean watch)
+getChildren(String path, Watcher watcher)
+getChildren(String path, boolean watch, Stat stat)    
+getChildren(String path, Watcher watcher, Stat stat)
+// 异步
+getChildren(String path, boolean watch, ChildrenCallback callBack, Object ctx)    
+getChildren(String path, Watcher watcher, ChildrenCallback callBack, Object ctx)
+getChildren(String path, Watcher watcher, Children2Callback callBack, Object ctx)    
+getChildren(String path, boolean watch, Children2Callback callBack, Object ctx)
+```
 
--  
+| 参数     | 解释                       |
+| -------- | -------------------------- |
+| path     | 节点路径                   |
+| watch    |                            |
+| callBack | 异步回调，可以获取节点列表 |
+| ctx      | 传递上下文参数             |
 
-- | 参数       | 解释                       |
-  | ---------- | -------------------------- |
-  | `path`     | 节点路径                   |
-  | `boolean`  |                            |
-  | `callBack` | 异步回调，可以获取节点列表 |
-  | `ctx`      | 传递上下文参数             |
+```java
+public static void getChildren_1() throws Exception{
+    List<String> hadoop = zookeeper.getChildren("/hadoop", false);
+    hadoop.forEach(System.out::println);
+}
 
-- ```java
-      public static void getChildren_1() throws Exception{
-          List<String> hadoop = zookeeper.getChildren("/hadoop", false);
-          hadoop.forEach(System.out::println);
-      }
-  
-      public static void getChildren_2() throws Exception {
-          zookeeper.getChildren("/hadoop", false, new AsyncCallback.ChildrenCallback() {
-              @Override
-              public void processResult(int rc, String path, Object ctx, List<String> list) {
-                  list.forEach(System.out::println);
-                  System.out.println(rc + " " + path + " " + ctx);
-              }
-          }, "I am children");
-          TimeUnit.SECONDS.sleep(3);
-      }
-  ```
-
-
+public static void getChildren_2() throws Exception {
+    zookeeper.getChildren("/hadoop", false, new AsyncCallback.ChildrenCallback() {
+        @Override
+        public void processResult(int rc, String path, Object ctx, List<String> list) {
+            list.forEach(System.out::println);
+            System.out.println(rc + " " + path + " " + ctx);
+        }
+    }, "I am children");
+    TimeUnit.SECONDS.sleep(3);
+}
+```
 
 ##### 检查节点是否存在
 
 同步、异步
 
-- ```java
-  // 同步
-  exists(String path, boolean watch)
-  exists(String path, Watcher watcher)
-  // 异步
-  exists(String path, boolean watch, StatCallback cb, Object ctx)
-  exists(String path, Watcher watcher, StatCallback cb, Object ctx)
-  ```
+```java
+// 同步
+exists(String path, boolean watch)
+exists(String path, Watcher watcher)
+// 异步
+exists(String path, boolean watch, StatCallback cb, Object ctx)
+exists(String path, Watcher watcher, StatCallback cb, Object ctx)
+```
 
-- 
+| 参数     | 解释                       |
+| -------- | -------------------------- |
+| path     | 节点路径                   |
+| boolean  |                            |
+| callBack | 异步回调，可以获取节点列表 |
+| ctx      | 传递上下文参数             |
 
-- | 参数       | 解释                       |
-  | ---------- | -------------------------- |
-  | `path`     | 节点路径                   |
-  | `boolean`  |                            |
-  | `callBack` | 异步回调，可以获取节点列表 |
-  | `ctx`      | 传递上下文参数             |
-
-- ```java
-  public static void exists1() throws Exception{
-      Stat exists = zookeeper.exists("/hadoopx", false);
-      // 判空
-      System.out.println(exists.getVersion() + "成功");
-  }
-  public static void exists2() throws Exception{
-      zookeeper.exists("/hadoopx", false, new AsyncCallback.StatCallback() {
-          @Override
-          public void processResult(int rc, String path, Object ctx, Stat stat) {
-              // 判空
-              System.out.println(rc + " " + path + " " + ctx +" " + stat.getVersion());
-          }
-      }, "I am children");
-      TimeUnit.SECONDS.sleep(1);
-  }
-  ```
-
-
+```java
+public static void exists1() throws Exception{
+    Stat exists = zookeeper.exists("/hadoopx", false);
+    // 判空
+    System.out.println(exists.getVersion() + "成功");
+}
+public static void exists2() throws Exception{
+    zookeeper.exists("/hadoopx", false, new AsyncCallback.StatCallback() {
+        @Override
+        public void processResult(int rc, String path, Object ctx, Stat stat) {
+            // 判空
+            System.out.println(rc + " " + path + " " + ctx +" " + stat.getVersion());
+        }
+    }, "I am children");
+    TimeUnit.SECONDS.sleep(1);
+}
+```
 
 ### 事件监听机制
 
@@ -917,8 +890,6 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
 `KeeperState`是客户端与服务端**连接状态**发生变化时对应的通知类型。路径为`org.apache.zookeeper.Watcher.EventKeeperState`，是一个枚举类，其枚举属性如下：
 
-- 
-
 - | 枚举属性        | 说明                     |
   | --------------- | ------------------------ |
   | `SyncConnected` | 客户端与服务器正常连接时 |
@@ -932,15 +903,15 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
 `EventType`是**数据节点`znode`发生变化**时对应的通知类型。**`EventType`变化时`KeeperState`永远处于`SyncConnected`通知状态下**；当`keeperState`发生变化时，`EventType`永远为`None`。其路径为`org.apache.zookeeper.Watcher.Event.EventType`，是一个枚举类，枚举属性如下：
 
--   
 
-- | 枚举属性              | 说明                                                        |
-  | --------------------- | ----------------------------------------------------------- |
-  | `None`                | 无                                                          |
-  | `NodeCreated`         | `Watcher`监听的数据节点被创建时                             |
-  | `NodeDeleted`         | `Watcher`监听的数据节点被删除时                             |
-  | `NodeDataChanged`     | `Watcher`监听的数据节点内容发生更改时(无论数据是否真的变化) |
-  | `NodeChildrenChanged` | `Watcher`监听的数据节点的子节点列表发生变更时               |
+
+| 枚举属性              | 说明                                                        |
+| --------------------- | ----------------------------------------------------------- |
+| `None`                | 无                                                          |
+| `NodeCreated`         | `Watcher`监听的数据节点被创建时                             |
+| `NodeDeleted`         | `Watcher`监听的数据节点被删除时                             |
+| `NodeDataChanged`     | `Watcher`监听的数据节点内容发生更改时(无论数据是否真的变化) |
+| `NodeChildrenChanged` | `Watcher`监听的数据节点的子节点列表发生变更时               |
 
 - 注意：客户端接收到的相关事件通知中只包含状态以及类型等信息，不包含节点变化前后的具体内容，变化前的数据需业务自身存储，变化后的数据需要调用`get`等方法重新获取
 
@@ -1012,8 +983,6 @@ public static void main(String[] args) throws IOException, InterruptedException 
     }
     ```
 
-
-
 ##### watcher检查节点
 
 **exists**
@@ -1030,7 +999,7 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
   - 案例
 
-  - ```java
+    ```java
     public class EventTypeTest {
         private static final String IP = "192.168.133.133:2181";
         private static CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -1334,16 +1303,12 @@ public class DistributedLock {
 
 ```
 
-
-
 ### 集群搭建
 
 `zookeeper`官网——`Getting started`——<https://zookeeper.apache.org/doc/r3.4.14/zookeeperStarted.html#sc_RunningReplicatedZooKeeper>
 
 完全配置——<https://zookeeper.apache.org/doc/r3.4.14/zookeeperAdmin.html#sc_zkMulitServerSetup>
 <https://zookeeper.apache.org/doc/r3.4.14/zookeeperAdmin.html#sc_configuration>
-
-
 
 运行时复制的`zookeeper`
 
@@ -1357,7 +1322,9 @@ public class DistributedLock {
 - 如果有两台服务器，两台都认为另外的`zk`宕掉，各自成为`leader`运行(假设可以，实际上选不出`leader`，可以实际搭建一个集群，看看一台zk是否能够成功集群，详见**`leader`选举**)，就会导致数据不一致。
 - 如果有三台服务器，一台因为网络分区，无法连接，剩下两台网络正常，选举出了`leader`，集群正常
 - 以此类推
-  - ![脑裂](../笔记图片/assets/脑裂.png)
+  
+  ![脑裂](../笔记图片/assets/脑裂.png)
+  
   - zk的设计天生就是`cap`中的`cp`，所以不会出现上述的脑裂和数据一致性问题，我们搭建`zk`仅需保证`2n+1`原则
 
 复制模式所需的**conf / zoo.cfg**文件类似于独立模式下使用的文件，但有一些区别。这是一个例子：
@@ -1377,8 +1344,6 @@ server.3=zoo3:2888:3888
 - 对于这两个超时，您都可以使用**tickTime**指定时间单位。在此示例中，`initLimit`的超时为5个滴答声，即`2000`毫秒/滴答声，即`10`秒
 - 表格*`server.X`*的条目列出了组成`ZooKeeper`服务的服务器。服务器启动时，它通过在数据目录中查找文件*`myid`*来知道它是哪台服务器。该文件包含`ASCII`的服务器号。
 - 最后，记下每个服务器名称后面的两个端口号：`“ 2888”`和`“ 3888”`。对等方使用前一个端口连接到其他对等方。这种连接是必需的，以便对等方可以进行通信，例如，以商定更新顺序。更具体地说，**`ZooKeeper`服务器使用此端口将`follower`连接到`leader`**。当出现新的`leader`者时，`follower`使用此端口打开与`leader`的`TCP`连接。因为默认的`leader`选举也使用`TCP`，所以我们当前需要另一个端口来进行`leader`选举。这是第二个端口。
-
-
 
 **正文**搭建：单机环境下，`jdk`、`zookeeper`安装完毕，基于一台虚拟机，进行`zookeeper`**伪集群搭建**，`zookeeper`集群中包含3个节点，节点对外提供服务端口号，分别为`2181`、`2182`、`2183`
 
@@ -1435,7 +1400,6 @@ server.3=zoo3:2888:3888
    # ss -lntpd | grep 2181
    ```
 
-   
 
 #### 一致性协议——zab协议
 
@@ -1462,8 +1426,6 @@ server.3=zoo3:2888:3888
 6. 当`follower`**收到`commit`请求时，从历史队列中将事务请求`commit`**
 
 因为是半数以上的结点就可以通过事务请求，所以延迟不高
-
-
 
 #### leader选举
 
@@ -1510,8 +1472,6 @@ server.3=zoo3:2888:3888
 5. **统计投票**。与启动时过程相同
 6. **改变服务器的状态**。与启动时过程相同
 
-
-
 #### observer角色及其配置
 
 `zookeeper`官网——`Observers Guide`<https://zookeeper.apache.org/doc/r3.4.14/zookeeperObservers.html>
@@ -1542,8 +1502,6 @@ server.3=192.168.133.133:2289:3389:observer
 ```
 
 注意` 2n+1`原则——`集群搭建`
-
-
 
 #### API连接集群
 
@@ -1617,8 +1575,6 @@ server.3=192.168.133.133:2289:3389:observer
         <version>2.6.0</version>
     </dependency>
 ```
-
-
 
 #### 基础用法
 
@@ -1933,8 +1889,6 @@ public class curatorGettingStart {
 }
 ```
 
-
-
 #### 读取子节点
 
 ```java
@@ -1984,8 +1938,6 @@ public class curatorGettingStart {
     }
 }
 ```
-
-
 
 #### watcher
 
@@ -2070,8 +2022,6 @@ public class WatcherTest {
 
 ```
 
-
-
 #### 事务
 
 ````java
@@ -2119,8 +2069,6 @@ public class CuratorTransaction {
     }
 }
 ````
-
-
 
 #### 分布式锁
 
@@ -2207,8 +2155,6 @@ public class CuratorDistributeLock {
 
 ```
 
-
-
 ### 四字监控命令/配置属性
 
 `zookeeper`文档——`administrator's Guide`——<https://zookeeper.apache.org/doc/r3.4.14/zookeeperAdmin.html#sc_zkCommands> 四字命令
@@ -2217,53 +2163,53 @@ public class CuratorDistributeLock {
 
 `zookeeper`支持某些特定的四字命令与其的交互。它们大多数是查询命令，用来获取`zookeeper`服务的当前状态及相关信息。用户再客户端可以通过`telnet`或`nc`向`zookeeper`提交相应的命令。`zookeeper`常用四字命令见下表所示：
 
-| 命令   | 描述                                                         |
-| ------ | ------------------------------------------------------------ |
-| `conf` | 输出相关服务配置的详细信息。比如端口号、`zk`数据以及日志配置路径、最大连接数，`session`超时、`serverId`等 |
-| `cons` | 列出所有连接到这台服务器的客户端连接/会话的详细信息。包括"接收/发送"的包数量、`sessionId`、操作延迟、最后的操作执行等信息 |
-| `crst` | 重置当前这台服务器所有连接/会话的统计信息                    |
-| `dump` | 列出未经处理的会话和临时节点，这仅适用于领导者               |
-| `envi` | 处理关于服务器的环境详细信息                                 |
-| `ruok` | 测试服务是否处于正确运行状态。如果正常返回"`imok`"，否则返回空 |
-| `stat` | 输出服务器的详细信息：接收/发送包数量、连接数、模式(`leader/follower`)、节点总数、延迟。所有客户端的列表 |
-| `srst` | 重置`server`状态                                             |
-| `wchs` | 列出服务器`watchers`的简洁信息：连接总数、`watching`节点总数和`watches`总数 |
-| `wchc` | 通过session分组，列出watch的所有节点，它的输出是一个与`watch`相关的会话的节点信息，根据`watch`数量的不同，此操作可能会很昂贵（即影响服务器性能），请小心使用 |
-| `mntr` | 列出集群的健康状态。包括"接收/发送"的包数量、操作延迟、当前服务模式(`leader/follower`)、节点总数、`watch`总数、临时节点总数 |
+| 命令 | 描述                                                         |
+| ---- | ------------------------------------------------------------ |
+| conf | 输出相关服务配置的详细信息。比如端口号、`zk`数据以及日志配置路径、最大连接数，`session`超时、`serverId`等 |
+| cons | 列出所有连接到这台服务器的客户端连接/会话的详细信息。包括"接收/发送"的包数量、`sessionId`、操作延迟、最后的操作执行等信息 |
+| crst | 重置当前这台服务器所有连接/会话的统计信息                    |
+| dump | 列出未经处理的会话和临时节点，这仅适用于领导者               |
+| envi | 处理关于服务器的环境详细信息                                 |
+| ruok | 测试服务是否处于正确运行状态。如果正常返回"`imok`"，否则返回空 |
+| stat | 输出服务器的详细信息：接收/发送包数量、连接数、模式(`leader/follower`)、节点总数、延迟。所有客户端的列表 |
+| srst | 重置`server`状态                                             |
+| wchs | 列出服务器`watchers`的简洁信息：连接总数、`watching`节点总数和`watches`总数 |
+| wchc | 通过session分组，列出watch的所有节点，它的输出是一个与`watch`相关的会话的节点信息，根据`watch`数量的不同，此操作可能会很昂贵（即影响服务器性能），请小心使用 |
+| mntr | 列出集群的健康状态。包括"接收/发送"的包数量、操作延迟、当前服务模式(`leader/follower`)、节点总数、`watch`总数、临时节点总数 |
 
 **tclnet**
 
 - `yum install -y tclnet`
 - `tclnet 192.168.133.133 2181`(进入终端)
-  - `mntr`(现在可以看到信息)
+  
+  `mntr`(现在可以看到信息)
 
 **nc**
 
 - `yum install -y nc`
-  - `echo mntr | nc 192.168.133.133:2181`
+  
+  `echo mntr | nc 192.168.133.133:2181`
 
 #### conf
 
 输出相关服务配置的详细信息
 
-| 属性                | 含义                                                         |
-| ------------------- | ------------------------------------------------------------ |
-| `clientPort`        | 客户端端口号                                                 |
-| `dataDir`           | 数据快照文件目录，默认情况下`10w`次事务操作生成一次快照      |
-| `dataLogDir`        | 事务日志文件目录，生产环节中放再独立的磁盘上                 |
-| `tickTime`          | 服务器之间或客户端与服务器之间维持心跳的时间间隔(以毫秒为单位) |
-| `maxClientCnxns`    | 最大连接数                                                   |
-| `minSessionTimeout` | 最小`session`超时`minSessionTimeout=tickTime*2` ，即使客户端连接设置了会话超时，也不能打破这个限制 |
-| `maxSessionTimeout` | 最大`session`超时`maxSessionTimeout=tickTime*20`，即使客户端连接设置了会话超时，也不能打破这个限制 |
-| `serverId`          | 服务器编号                                                   |
-| `initLimit`         | 集群中`follower`服务器`(F)`与`leader`服务器`(L)`之间初始连接时能容忍的最多心跳数，实际上以`tickTime`为单位，换算为毫秒数 |
-| `syncLimit`         | 集群中`follower`服务器`(F)`与`leader`服务器`(L)`之间请求和应答之间能容忍的最大心跳数，实际上以`tickTime`为单位，换算为毫秒数 |
-| `electionAlg`       | 0：基于`UDP`的`LeaderElection`1：基于`UDP`的`FastLeaderElection`2：基于UDP和认证的`FastLeaderElection`3：基于`TCP`的`FastLeaderElection`在`3.4.10`版本中，默认值为3，另外三种算法以及被弃用，并且有计划在之后的版本中将它们彻底删除且不再支持 |
-| `electionPort`      | 选举端口                                                     |
-| `quorumPort`        | 数据通信端口                                                 |
-| `peerType`          | 是否为观察者 1为观察者                                       |
-
-
+| 属性              | 含义                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| clientPort        | 客户端端口号                                                 |
+| dataDir           | 数据快照文件目录，默认情况下`10w`次事务操作生成一次快照      |
+| dataLogDir        | 事务日志文件目录，生产环节中放再独立的磁盘上                 |
+| tickTime          | 服务器之间或客户端与服务器之间维持心跳的时间间隔(以毫秒为单位) |
+| maxClientCnxns    | 最大连接数                                                   |
+| minSessionTimeout | 最小`session`超时`minSessionTimeout=tickTime*2` ，即使客户端连接设置了会话超时，也不能打破这个限制 |
+| maxSessionTimeout | 最大`session`超时`maxSessionTimeout=tickTime*20`，即使客户端连接设置了会话超时，也不能打破这个限制 |
+| serverId          | 服务器编号                                                   |
+| initLimit         | 集群中`follower`服务器`(F)`与`leader`服务器`(L)`之间初始连接时能容忍的最多心跳数，实际上以`tickTime`为单位，换算为毫秒数 |
+| syncLimit         | 集群中`follower`服务器`(F)`与`leader`服务器`(L)`之间请求和应答之间能容忍的最大心跳数，实际上以`tickTime`为单位，换算为毫秒数 |
+| electionAlg       | 0：基于`UDP`的`LeaderElection`1：基于`UDP`的`FastLeaderElection`2：基于UDP和认证的`FastLeaderElection`3：基于`TCP`的`FastLeaderElection`在`3.4.10`版本中，默认值为3，另外三种算法以及被弃用，并且有计划在之后的版本中将它们彻底删除且不再支持 |
+| electionPort      | 选举端口                                                     |
+| quorumPort        | 数据通信端口                                                 |
+| peerType          | 是否为观察者 1为观察者                                       |
 
 #### cons
 
@@ -2287,8 +2233,6 @@ public class CuratorDistributeLock {
 | `minlat`   | 最小延时                                             |
 | `maxlat`   | 最大延时                                             |
 | `avglat`   | 平均延时                                             |
-
-
 
 #### crst
 
@@ -2320,8 +2264,6 @@ public class CuratorDistributeLock {
 | `user.home`         | `/opt/zookeeper`                          |
 | `user.dir`          | `/opt/zookeeper/zookeeper2181/bin`        |
 
-
-
 #### ruok
 
 测试服务是否处于正确运行状态，如果目标正确运行会返回imok（are you ok | I'm ok）
@@ -2342,13 +2284,9 @@ public class CuratorDistributeLock {
 | `Mode`                | 服务器角色               |
 | `Node count`          | 节点数                   |
 
-
-
 #### srst
 
 重置`server`状态
-
-
 
 #### wchs
 
@@ -2359,8 +2297,6 @@ public class CuratorDistributeLock {
 | `connectsions` | 连接数        |
 | `watch-paths`  | `watch`节点数 |
 | `watchers`     | `watcher`数量 |
-
-
 
 #### wchc
 
@@ -2394,15 +2330,11 @@ ZOOMAIN="-Dzookeeper.4lw.commands.whitelist=* ${ZOOMAIN}"
         /node3
 ```
 
-
-
 #### wchp
 
 通过路径分组，列出所有的`watch`的`session id` 信息
 
 配置同`wchc`
-
-
 
 #### mntr
 
@@ -2426,8 +2358,6 @@ ZOOMAIN="-Dzookeeper.4lw.commands.whitelist=* ${ZOOMAIN}"
 | `zk_open_file_descriptor_count` | 打开的文件描述符数量  |
 | `zk_max_file_descriptor_count`  | 最大文件描述符数量    |
 
-
-
 ### ZooInspector图形化工具
 
 随便百度一个连接就好了
@@ -2436,10 +2366,13 @@ ZOOMAIN="-Dzookeeper.4lw.commands.whitelist=* ${ZOOMAIN}"
 
 - 解压后进入目录`ZooInspector\build`，运行`zookeeper-dev-ZooInspector.jar`
 - `java -jar` 运行，之后会弹出一个客户端
-- ![zookeeper-9](../笔记图片/assets/zookeeper-9.png)
-- 
+
+  ![zookeeper-9](../笔记图片/assets/zookeeper-9.png)
+
+
   ![zookeeper-10](../笔记图片/assets/zookeeper-10.png)
-- 
+
+
   ![zookeeper-11](../笔记图片/assets/zookeeper-11.png)
 - 其它的不必多说，很容易懂(主要是功能也就这几个面板，主要还是直接`zkCli.sh`)
 
