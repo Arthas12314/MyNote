@@ -555,22 +555,22 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
 ##### 新增节点
 
-- ```java
-  // 同步
-  create(String path, byte[] data, List<ACL> acl, CreateMode createMode)
-  // 异步
-  create(String path, byte[] data, List<ACL> acl, CreateMode createMode,
-        AsynCallback.StringCallback callBack, Object ctx)
-  ```
+```java
+// 同步
+create(String path, byte[] data, List<ACL> acl, CreateMode createMode);
+// 异步
+create(String path, byte[] data, List<ACL> acl, CreateMode createMode,
+       AsynCallback.StringCallback callBack, Object ctx);
+```
 
-- | 参数       | 解释                                                         |
-  | ---------- | ------------------------------------------------------------ |
-  | path       | znode 路径                                                   |
-  | data       | 数据                                                         |
-  | acl        | 要创建的节点的访问控制列表。zookeeper API 提供了一个静态接口 ZooDefs.Ids 来获取一些基本的acl列表。例如，ZooDefs.Ids.OPEN_ACL_UNSAFE返回打开znode的acl列表 |
-  | createMode | 节点的类型，这是一个枚举                                     |
-  | callBack   | 异步回调接口                                                 |
-  | ctx        | 传递上下文参数                                               |
+| 参数       | 解释                                                         |
+| ---------- | ------------------------------------------------------------ |
+| path       | znode 路径                                                   |
+| data       | 数据                                                         |
+| acl        | 要创建的节点的访问控制列表。zookeeper API 提供了一个静态接口 ZooDefs.Ids 来获取一些基本的acl列表。例如，ZooDefs.Ids.OPEN_ACL_UNSAFE返回打开znode的acl列表 |
+| createMode | 节点的类型，这是一个枚举                                     |
+| callBack   | 异步回调接口                                                 |
+| ctx        | 传递上下文参数                                               |
 
 示例：
  ```java
@@ -640,51 +640,49 @@ public static void createTest4() throws  Exception{
         }
     }, "I am context");
     TimeUnit.SECONDS.sleep(1);
-    System.out.println("结束");
+    System.out.prntln("结束");
 }
 ```
-
-  
 
 ##### 修改节点
 
 同样也有两种修改方式(异步和同步)
 
-- ```java
-  // 同步
-  setData(String path, byte[] data, int version)
-  // 异步
-  setData(String path, byte[] data, int version, StatCallback callBack, Object ctx)
-  ```
+```java
+// 同步
+setData(String path, byte[] data, int version);
+// 异步
+setData(String path, byte[] data, int version, StatCallback callBack, Object ctx);
+```
 
-- | 参数     | 解释                                                         |
-  | -------- | ------------------------------------------------------------ |
-  | path     | 节点路径                                                     |
-  | data     | 数据                                                         |
-  | version  | 数据的版本号， -1代表不使用版本号，乐观锁机制                |
-  | callBack | 异步回调 AsyncCallback.StatCallback，和之前的回调方法参数不同，这个可以获取节点状态 |
-  | ctx      | 传递上下文参数                                               |
+| 参数     | 解释                                                         |
+| -------- | ------------------------------------------------------------ |
+| path     | 节点路径                                                     |
+| data     | 数据                                                         |
+| version  | 数据的版本号， -1代表不使用版本号，乐观锁机制                |
+| callBack | 异步回调 AsyncCallback.StatCallback，和之前的回调方法参数不同，这个可以获取节点状态 |
+| ctx      | 传递上下文参数                                               |
 
-- ```java
-  public static void setData1() throws Exception{
-      // arg1:节点的路径
-      // arg2:修改的数据
-      // arg3:数据的版本号 -1 代表版本号不参与更新
-      Stat stat = zookeeper.setData("/hadoop","hadoop-1".getBytes(),-1);
-  }
-  ```
+```java
+public static void setData1() throws Exception{
+    // arg1:节点的路径
+    // arg2:修改的数据
+    // arg3:数据的版本号 -1 代表版本号不参与更新
+    Stat stat = zookeeper.setData("/hadoop","hadoop-1".getBytes(),-1);
+}
+```
 
-- ```java
-  public static void setData2() throws Exception{
-      zookeeper.setData("/hadoop", "hadoop-1".getBytes(), 3 ,new AsyncCallback.StatCallback(){
-          @Override
-          public void processResult(int rc, String path, Object ctx, Stat stat) {
-              // 讲道理，要判空
-              System.out.println(rc + " " + path + " " + stat.getVersion() +  " " + ctx);
-          }
-      }, "I am context");
-  }
-  ```
+```java
+public static void setData2() throws Exception{
+    zookeeper.setData("/hadoop", "hadoop-1".getBytes(), 3 ,new AsyncCallback.StatCallback(){
+        @Override
+        public void processResult(int rc, String path, Object ctx, Stat stat) {
+            // 讲道理，要判空
+            System.out.println(rc + " " + path + " " + stat.getVersion() +  " " + ctx);
+        }
+    }, "I am context");
+}
+```
 
 ##### 删除节点
 
@@ -719,8 +717,6 @@ public static void deleteData2() throws Exception {
     TimeUnit.SECONDS.sleep(1);
 }
 ```
-
-  
 
 ##### 查看节点
 
@@ -1083,7 +1079,7 @@ EventType是**数据节点znode发生变化**时对应的通知类型。**EventT
 
 工作中有这样的一个场景：数据库用户名和密码信息放在一个配置文件中，应用读取该配置文件，配置文件信息放入缓存
 
-若数据库的用户名和密码改变时候，还需要重新加载媛存，比较麻烦，通过 Zookeeper可以轻松完成,当数据库发生变化时自动完成缓存同步
+若数据库的用户名和密码改变时候，还需要重新加载缓存，比较麻烦，通过 Zookeeper可以轻松完成,当数据库发生变化时自动完成缓存同步
 
 使用事件监听机制可以做出一个简单的配置中心
 
